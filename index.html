@@ -35,6 +35,7 @@
   .badge { grid-column: 1 / -1; font-size: 14px; font-weight: 700; color: var(--win); }
   .name { font-weight: 700; font-size: 20px; line-height: 1.3; }
   .note { color: var(--muted); font-size: 16px; }
+  .count { grid-column: 1 / -1; font-weight: 700; font-size: 17px; margin-top: 6px; }
   .meta { grid-column: 1 / -1; color: var(--muted); font-size: 15px; }
   .vote { min-width: 72px; border: 2px solid var(--accent); background: var(--card); color: var(--accent); border-radius: 14px; padding: 8px 10px; font: inherit; font-weight: 700; cursor: pointer; display: grid; justify-items: center; line-height: 1.2; }
   .vote span { font-size: 13px; font-weight: 400; }
@@ -214,8 +215,12 @@
         v.onclick = () => act({ k: 'vote', id: d.id, who: me, on: !on });
       }
       li.append(v);
+      const c = document.createElement('div'); c.className = 'count';
+      const nv = d.votes.length;
+      c.textContent = nv ? `❤️ ${nv} vote${nv > 1 ? 's' : ''} : ${d.votes.join(', ')}` : '❤️ 0 vote pour l’instant';
+      li.append(c);
       const m = document.createElement('div'); m.className = 'meta';
-      m.textContent = `Proposé par ${d.by}${d.votes.length ? ' · ' + d.votes.join(', ') : ''}`;
+      m.textContent = same(d.by, me) ? 'Proposé par toi (tu ne peux pas voter pour ton plat)' : `Proposé par ${d.by}`;
       li.append(m);
       if (same(d.by, me)) {
         const rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = 'Retirer mon plat';
