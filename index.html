@@ -39,6 +39,7 @@
   .vote { min-width: 72px; border: 2px solid var(--accent); background: var(--card); color: var(--accent); border-radius: 14px; padding: 8px 10px; font: inherit; font-weight: 700; cursor: pointer; display: grid; justify-items: center; line-height: 1.2; }
   .vote span { font-size: 13px; font-weight: 400; }
   .vote[aria-pressed="true"] { background: var(--accent); color: #fff; }
+  .vote.own { border-color: var(--line); color: var(--muted); cursor: default; }
   .rm { background: none; border: 0; color: var(--muted); font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer; padding: 4px 0; justify-self: start; }
   .empty { color: var(--muted); text-align: left; padding: 8px 0; }
   .gate { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; display: grid; gap: 12px; }
@@ -49,7 +50,7 @@
 <body>
 <main>
   <h1>🍽️ Menu du week-end</h1>
-  <p class="sub">Propose ton plat, vote pour ceux qui te tentent (autant que tu veux). Le plus voté gagne.</p>
+  <p class="sub">Propose ton plat, vote pour ceux des autres qui te tentent (autant que tu veux, mais pas pour le tien). Le plus voté gagne.</p>
 
   <section id="gate" class="gate" hidden>
     <label for="who">Ton prénom</label>
@@ -130,10 +131,11 @@
       if (snap && t < snap.upto) continue;
       const who = clean(e.who, 30);
       if (e.k === 'add' && who && clean(e.name, 60) && LABEL[e.meal] && !map.has(e.id))
-        map.set(e.id, { id: e.id, meal: e.meal, name: clean(e.name, 60), note: clean(e.note, 120), by: who, ts: t, votes: new Set([who]) });
+        map.set(e.id, { id: e.id, meal: e.meal, name: clean(e.name, 60), note: clean(e.note, 120), by: who, ts: t, votes: new Set() });
       const d = map.get(e.id);
       if (!d || !who) continue;
-      if (e.k === 'vote') e.on ? d.votes.add(who) : d.votes.delete(who);
+      // Interdit de voter pour son propre plat
+      if (e.k === 'vote' && !same(d.by, who)) e.on ? d.votes.add(who) : d.votes.delete(who);
       if (e.k === 'rm' && same(d.by, who)) map.delete(e.id);
     }
     dishes = [...map.values()].map((d) => ({ ...d, votes: [...d.votes] }));
@@ -203,9 +205,14 @@
       li.append(txt);
       const on = d.votes.some((v) => same(v, me));
       const v = document.createElement('button'); v.className = 'vote'; v.setAttribute('aria-pressed', on);
-      v.setAttribute('aria-label', `${on ? 'Retirer mon vote pour' : 'Voter pour'} ${d.name}`);
-      v.innerHTML = `${on ? '❤️' : '🤍'} ${d.votes.length}<span>${on ? 'voté' : 'voter'}</span>`;
-      v.onclick = () => act({ k: 'vote', id: d.id, who: me, on: !on });
+      if (same(d.by, me)) {
+        v.disabled = true; v.classList.add('own');
+        v.innerHTML = `${d.votes.length}<span>ton plat</span>`;
+      } else {
+        v.setAttribute('aria-label', `${on ? 'Retirer mon vote pour' : 'Voter pour'} ${d.name}`);
+        v.innerHTML = `${on ? '❤️' : '🤍'} ${d.votes.length}<span>${on ? 'voté' : 'voter'}</span>`;
+        v.onclick = () => act({ k: 'vote', id: d.id, who: me, on: !on });
+      }
       li.append(v);
       const m = document.createElement('div'); m.className = 'meta';
       m.textContent = `Proposé par ${d.by}${d.votes.length ? ' · ' + d.votes.join(', ') : ''}`;
