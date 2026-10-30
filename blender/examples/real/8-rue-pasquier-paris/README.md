@@ -2,13 +2,15 @@
 
 Produit par `blender-buildings site --address "8 rue Pasquier 75008 Paris"` (ou l'outil MCP `build_from_address`).
 
-| Vue piéton (rue Pasquier) | Îlot sur orthophoto IGN |
-|---|---|
-| ![Vue rue](01_vue_rue.png) | ![Îlot](02_vue_aerienne_ilot.png) |
+Le bâtiment **seul** (sans les voisins), sur un sol neutre.
 
-| Vue aérienne proche | Élévation de la façade | Bâtiment isolé | Plan de toiture sur orthophoto |
+| Vue piéton depuis la rue Pasquier | Perspective 3/4 |
+|---|---|
+| ![Vue rue](01_vue_rue.png) | ![Perspective](02_perspective.png) |
+
+| Arrière (cour) | Élévation façade rue | Élévation pignon sud | Plan de toiture |
 |---|---|---|---|
-| ![Proche](03_vue_aerienne_proche.png) | ![Élévation](04_elevation_facade.png) | ![Isolé](05_vue_3d_isolee.png) | ![Toiture](06_plan_toiture_ortho.png) |
+| ![Arrière](03_perspective_arriere.png) | ![Élévation](04_elevation_rue.png) | ![Pignon](05_elevation_pignon_sud.png) | ![Toiture](06_plan_toiture.png) |
 
 ## Données utilisées
 
@@ -23,8 +25,7 @@ Produit par `blender-buildings site --address "8 rue Pasquier 75008 Paris"` (ou 
 | Période de construction | 1801 – 1850 (Louis-Philippe), rue ouverte en 1792, élargie à 12 m en 1839 | Bercail (cadastre), Wikipédia « Rue Pasquier » |
 | Travaux récents | ravalement côté cour (2024), étanchéité de terrasse (2020) | Bercail (déclarations préalables) |
 | OpenStreetMap | way/67559065, pas de hauteur ni de date renseignée | Overpass |
-| Voisins | 43 bâtiments dans un rayon de 90 m avec leurs hauteurs et niveaux IGN | IGN BD TOPO® |
-| Fond de plan | orthophoto IGN HR, 240 m × 240 m, plaquée sur le sol | IGN WMS |
+| Orientation | façade sur rue à l'ouest (azimut de vue 261°), rue de 12 m | déduite du point adresse et de l'emprise |
 | Prix | ~12 075 €/m² (juin 2026) | MeilleursAgents |
 
 Google Earth et Street View n'ont pas d'accès programmatique ouvert : la vue piéton est reconstituée à partir de
@@ -42,7 +43,8 @@ paramétrique de style parisien pré-haussmannien, à ajuster avec `--set` ou `o
 ## Fichiers
 
 - `spec_8_rue_pasquier.json` : spec paramétrique du bâtiment (rejouable avec `blender-buildings build --spec …`) ;
-- `8_rue_pasquier.glb` : le bâtiment seul ; `ilot_complet.glb` : le bâtiment et ses 43 voisins ;
+- `8_rue_pasquier.glb`, `8_rue_pasquier.fbx`, `8_rue_pasquier.blend` : le bâtiment seul (ouvrable dans Blender, Three.js, Unity, Twinmotion…) ;
 - `metrics.json` : métriques et résumé de construction.
 
-Pour régénérer tout (y compris l'orthophoto et le fichier .blend) : `blender-buildings site --address "8 rue Pasquier 75008 Paris" --radius 90 --out output/pasquier --formats glb,blend,png --views street,perspective,left`.
+Pour régénérer : `blender-buildings site --address "8 rue Pasquier 75008 Paris" --no-context --no-ortho --out output/pasquier --formats glb,fbx,blend,png --views street,perspective,elevation`.
+Avec `--radius 90` (sans `--no-context --no-ortho`), on obtient en plus les 43 voisins et l'orthophoto IGN au sol.

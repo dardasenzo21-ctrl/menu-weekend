@@ -130,5 +130,7 @@ def test_build_site_in_blender(tmp_path):
     out = render_image(str(tmp_path / "street.png"), view="street", engine="workbench", resolution=(120, 150), names=[tgt], azimuth=site.facade_azimuth_deg, street_distance=13)
     assert out["size_bytes"] > 500
     assert all(not o.hide_render for o in bpy.context.scene.objects)  # les voisins masqués sont restaurés
-    out = render_image(str(tmp_path / "elev.png"), view="left", engine="workbench", resolution=(100, 100), names=[tgt], solo=True)
+    out = render_image(str(tmp_path / "elev.png"), view="elevation", engine="workbench", resolution=(100, 100), names=[tgt], solo=True, azimuth=site.facade_azimuth_deg)
     assert out["size_bytes"] > 500
+    cam = bpy.context.scene.camera
+    assert cam.data.type == "ORTHO" and cam.location.x < -5  # caméra à l'ouest, face à la rue Pasquier

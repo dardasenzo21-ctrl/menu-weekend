@@ -128,6 +128,8 @@ def cmd_site(args: argparse.Namespace) -> None:
                     kw: dict[str, Any] = {"view": view, "engine": args.render_engine, "width": args.width, "height": args.height}
                     if view == "street":
                         kw.update(objects=[tgt], azimuth=site.facade_azimuth_deg, street_distance=max(10.0, site.street_distance_m), width=min(args.width, args.height), height=max(args.width, args.height))
+                    elif view == "elevation":
+                        kw.update(objects=[tgt], solo=True, azimuth=site.facade_azimuth_deg)
                     elif view in ("front", "back", "left", "right"):
                         kw.update(objects=[tgt], solo=True)
                     r2 = engine.call("render", path=os.path.join(args.out, f"{base}_{view}.png"), **kw)
@@ -229,7 +231,6 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--set", action="append", help="Surcharge du bâtiment cible : clé.pointée=valeur")
     _add_engine_args(p)
     _add_output_args(p)
-    p.set_defaults(fn=cmd_site, views="street,perspective")
     p.set_defaults(fn=cmd_site)
 
     p = sub.add_parser("mcp", help="Lance le serveur MCP (arguments passés à blender-buildings-mcp)")

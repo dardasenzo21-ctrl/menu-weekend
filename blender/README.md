@@ -213,7 +213,8 @@ coefficient d'efficacité), pas un métré.
 ## 7. Modéliser un bâtiment réel à partir d'une adresse
 
 ```bash
-.venv/bin/blender-buildings site --address "8 rue Pasquier 75008 Paris" --out output/pasquier
+.venv/bin/blender-buildings site --address "8 rue Pasquier 75008 Paris" --out output/pasquier              # bâtiment + voisins + orthophoto
+.venv/bin/blender-buildings site --address "8 rue Pasquier 75008 Paris" --no-context --no-ortho --out output/p  # le bâtiment seul
 ```
 
 ou, dans Claude Code : *« Modélise le 8 rue Pasquier à Paris 8e »* → outil `build_from_address`, puis `render_preview(view="street", azimuth=…)`.
@@ -231,7 +232,7 @@ Le bâtiment cible reçoit une façade parisienne paramétrique (pierre, fenêtr
 ≥ 5 niveaux), ajustable par `--set` / `overrides`. La vue `street` place la caméra sur le trottoir d'en face, orientée
 par l'azimut de façade déduit du point adresse. Exemple complet et rendus : [`examples/real/8-rue-pasquier-paris/`](examples/real/8-rue-pasquier-paris/).
 
-![8 rue Pasquier](examples/real/8-rue-pasquier-paris/02_vue_aerienne_ilot.png)
+![8 rue Pasquier](examples/real/8-rue-pasquier-paris/02_perspective.png)
 
 Limites : Google Earth / Street View n'ont pas d'API ouverte, les façades sont donc reconstituées, pas photographiées ;
 les données IGN sont celles du millésime en ligne ; hors de France, seuls le géocodage (Nominatim) et OSM répondent.

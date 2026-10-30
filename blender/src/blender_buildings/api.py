@@ -60,7 +60,7 @@ class SiteRequest(BaseModel):
 
 
 class RenderRequest(BaseModel):
-    view: Literal["perspective", "iso", "street", "front", "back", "left", "right", "top"] = "perspective"
+    view: Literal["perspective", "iso", "street", "elevation", "front", "back", "left", "right", "top"] = "perspective"
     objects: list[str] | None = None
     solo: bool = False
     street_distance: float = Field(12.0, ge=2, le=100)

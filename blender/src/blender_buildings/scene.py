@@ -11,7 +11,7 @@ from mathutils import Vector
 
 from .materials import get_material, image_material
 
-View = Literal["perspective", "iso", "street", "front", "back", "left", "right", "top"]
+View = Literal["perspective", "iso", "street", "elevation", "front", "back", "left", "right", "top"]
 Engine = Literal["workbench", "eevee", "cycles"]
 
 
@@ -152,6 +152,19 @@ def frame_camera(view: View = "perspective", names: Iterable[str] | None = None,
         cam.lens = max(10.0, min(focal_mm, cam.sensor_width / (2 * math.tan(sensor_fov / 2))))
         aim = facade + Vector((0, 0, eye_height + d * math.tan(tilt)))
         _look_at(cam_obj, aim)
+    elif view == "elevation":
+        # Élévation orthographique perpendiculaire à la façade orientée vers ``azimuth`` (bâtiments non alignés sur les axes).
+        cam.type = "ORTHO"
+        az = math.radians(azimuth)
+        horiz = Vector((math.sin(az), -math.cos(az), 0.0))
+        right = Vector((-horiz.y, horiz.x, 0.0))
+        corners = [Vector((x, y, z)) for x in (lo.x, hi.x) for y in (lo.y, hi.y) for z in (lo.z, hi.z)]
+        w = 2 * max(abs((c - center).dot(right)) for c in corners)
+        h = size.z
+        aspect = scene.render.resolution_x / scene.render.resolution_y
+        cam.ortho_scale = max(w, h * aspect) * margin
+        cam_obj.location = center + horiz * (radius * 4 + 10)
+        _look_at(cam_obj, center)
     elif view in ("perspective", "iso"):
         cam.type = "PERSP"
         cam.lens = focal_mm
