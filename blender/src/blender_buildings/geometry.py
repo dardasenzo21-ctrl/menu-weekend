@@ -58,12 +58,12 @@ def bbox(pts: Sequence[Point]) -> tuple[float, float, float, float]:
     return (min(xs), min(ys), max(xs), max(ys))
 
 
-def offset_polygon(pts: Sequence[Point], distance: float) -> list[Point]:
+def offset_polygon(pts: Sequence[Point], distance: float, miter_limit: float = 3.0) -> list[Point]:
     """Décale un polygone anti-horaire de ``distance`` (positif = vers l'extérieur).
 
-    Décalage par intersection des arêtes voisines (onglet). Fiable pour des polygones
-    simples et des distances petites devant les arêtes (ce qui est notre cas : corniches,
-    acrotères, retraits de toiture).
+    Décalage par intersection des arêtes voisines (onglet), avec limite d'onglet ``miter_limit``
+    (en multiples de ``distance``) pour les angles très aigus. Fiable pour des polygones simples
+    et des distances petites devant les arêtes (corniches, acrotères, retraits de toiture).
     """
     pts = ensure_ccw(pts)
     n = len(pts)
@@ -90,7 +90,12 @@ def offset_polygon(pts: Sequence[Point], distance: float) -> list[Point]:
             continue
         # p1 + t*d1 = p2 + s*d2
         t = ((p2[0] - p1[0]) * d2[1] - (p2[1] - p1[1]) * d2[0]) / cross
-        out.append((p1[0] + d1[0] * t, p1[1] + d1[1] * t))
+        miter = (p1[0] + d1[0] * t, p1[1] + d1[1] * t)
+        # Limite d'onglet : sur un angle très aigu, l'intersection part à l'infini ; on tronque.
+        if math.dist(miter, p2) > miter_limit * abs(distance) + 1e-9:
+            out.append(p2)
+        else:
+            out.append(miter)
     return out
 
 

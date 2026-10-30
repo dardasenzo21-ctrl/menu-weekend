@@ -50,3 +50,12 @@ def test_rotate_translate():
     assert pts[0] == pytest.approx((0, 1), abs=1e-9)
     assert g.translate([(1, 2)], 3, 4) == [(4, 6)]
     assert math.isclose(g.perimeter(g.rotate(SQUARE, 33)), 40)
+
+
+def test_offset_spike_is_miter_limited():
+    """Un sommet très aigu (emprise cadastrale réelle) ne doit pas projeter l'onglet à l'infini."""
+    spike = [(0, 0), (20, 0), (20, 10), (10.0, 10.0), (10.05, 10.3), (0, 10)]
+    out = g.offset_polygon(spike, 0.3)
+    assert len(out) == 6
+    for (x, y) in out:
+        assert -1 <= x <= 21 and -1 <= y <= 11.5

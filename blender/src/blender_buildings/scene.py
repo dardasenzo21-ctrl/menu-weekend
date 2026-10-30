@@ -9,9 +9,9 @@ from typing import Any, Iterable, Literal
 import bpy
 from mathutils import Vector
 
-from .materials import get_material
+from .materials import get_material, image_material
 
-View = Literal["perspective", "iso", "front", "back", "left", "right", "top"]
+View = Literal["perspective", "iso", "street", "front", "back", "left", "right", "top"]
 Engine = Literal["workbench", "eevee", "cycles"]
 
 
@@ -39,6 +39,25 @@ def ensure_ground(size: float = 120.0, material: str = "asphalt") -> Any:
             v.co = (sx * h, sy * h, 0)
     obj.data.materials.clear()
     obj.data.materials.append(get_material(material))
+    return obj
+
+
+def ensure_textured_ground(half_size: float, image_path: str) -> Any:
+    """Plan de sol carré (±half_size, centré à l'origine) texturé par une image (orthophoto nord en haut)."""
+    old = bpy.data.objects.get("Ground")
+    if old is not None:
+        bpy.data.objects.remove(old, do_unlink=True)
+    mesh = bpy.data.meshes.new("Ground")
+    h = half_size
+    mesh.from_pydata([(-h, -h, 0), (h, -h, 0), (h, h, 0), (-h, h, 0)], [], [[0, 1, 2, 3]])
+    uv = mesh.uv_layers.new(name="UVMap")
+    for li, (u, v) in enumerate(((0, 0), (1, 0), (1, 1), (0, 1))):
+        uv.data[li].uv = (u, v)
+    mesh.update()
+    obj = bpy.data.objects.new("Ground", mesh)
+    bpy.context.scene.collection.objects.link(obj)
+    obj.location.z = -0.02
+    obj.data.materials.append(image_material(image_path))
     return obj
 
 
@@ -85,8 +104,15 @@ def scene_bounds(names: Iterable[str] | None = None) -> tuple[Vector, Vector]:
     return lo, hi
 
 
-def frame_camera(view: View = "perspective", names: Iterable[str] | None = None, margin: float = 1.06, azimuth: float = 35.0, elevation: float = 22.0, focal_mm: float = 35.0) -> Any:
-    """Crée/positionne la caméra pour cadrer les bâtiments. Vues orthographiques pour les élévations."""
+def frame_camera(view: View = "perspective", names: Iterable[str] | None = None, margin: float = 1.06, azimuth: float = 35.0, elevation: float = 22.0, focal_mm: float = 35.0, street_distance: float = 12.0, eye_height: float = 1.65) -> Any:
+    """Crée/positionne la caméra pour cadrer les bâtiments.
+
+    * ``perspective`` / ``iso`` : vue aérienne 3/4 cadrant la boîte englobante (``azimuth`` = d'où l'on regarde,
+      0 = depuis le sud, 90 = depuis l'est).
+    * ``street`` : piéton sur le trottoir d'en face, à ``street_distance`` m de la façade orientée vers ``azimuth``,
+      objectif grand angle, caméra inclinée pour cadrer toute la hauteur.
+    * ``front``/``back``/``left``/``right``/``top`` : élévations orthographiques.
+    """
     scene = bpy.context.scene
     cam_obj = bpy.data.objects.get("Camera")
     if cam_obj is None:
@@ -101,7 +127,32 @@ def frame_camera(view: View = "perspective", names: Iterable[str] | None = None,
     radius = max(size.length / 2, 1.0)
     cam.clip_end = max(1000.0, radius * 20)
 
-    if view in ("perspective", "iso"):
+    if view == "street":
+        cam.type = "PERSP"
+        az = math.radians(azimuth)
+        horiz = Vector((math.sin(az), -math.cos(az), 0.0))  # de la cible vers la rue
+        # point de façade : sortie de la boîte englobante le long de horiz
+        half = size / 2
+        t = min(half.x / abs(horiz.x) if abs(horiz.x) > 1e-6 else math.inf, half.y / abs(horiz.y) if abs(horiz.y) > 1e-6 else math.inf)
+        facade = Vector((center.x, center.y, 0.0)) + horiz * t
+        cam_obj.location = facade + horiz * street_distance + Vector((0, 0, eye_height))
+        aspect = scene.render.resolution_x / scene.render.resolution_y
+        d = street_distance
+        angle_top = math.atan2(hi.z - eye_height, d)
+        angle_bottom = -math.atan2(eye_height, d)
+        tilt = (angle_top + angle_bottom) / 2
+        needed_vfov = (angle_top - angle_bottom) + math.radians(8)
+        right = Vector((-horiz.y, horiz.x, 0.0))
+        half_w = max(abs((Vector((x, y, 0)) - facade).dot(right)) for x in (lo.x, hi.x) for y in (lo.y, hi.y))
+        needed_hfov = 2 * math.atan(half_w * 1.1 / d)
+        if aspect >= 1:
+            sensor_fov = max(needed_hfov, 2 * math.atan(math.tan(needed_vfov / 2) * aspect))
+        else:
+            sensor_fov = max(needed_vfov, 2 * math.atan(math.tan(needed_hfov / 2) / aspect))
+        cam.lens = max(10.0, min(focal_mm, cam.sensor_width / (2 * math.tan(sensor_fov / 2))))
+        aim = facade + Vector((0, 0, eye_height + d * math.tan(tilt)))
+        _look_at(cam_obj, aim)
+    elif view in ("perspective", "iso"):
         cam.type = "PERSP"
         cam.lens = focal_mm
         az = math.radians(azimuth if view == "perspective" else 45.0)
@@ -171,7 +222,7 @@ def configure_render(engine: Engine = "eevee", resolution: tuple[int, int] = (12
         scene.render.engine = "BLENDER_WORKBENCH"
         sh = scene.display.shading
         sh.light = "STUDIO"
-        sh.color_type = "MATERIAL"
+        sh.color_type = "TEXTURE"  # images (orthophoto) visibles, sinon couleur du matériau
         sh.show_shadows = True
         sh.show_cavity = True
     try:
@@ -189,8 +240,8 @@ def _engine_ids() -> set[str]:
         return set()
 
 
-def render_image(path: str, view: View = "perspective", engine: Engine = "eevee", resolution: tuple[int, int] = (1280, 720), samples: int = 16, names: Iterable[str] | None = None, **camera_kwargs: Any) -> dict[str, Any]:
-    """Rend la scène vers ``path`` (PNG). Retourne un résumé."""
+def render_image(path: str, view: View = "perspective", engine: Engine = "eevee", resolution: tuple[int, int] = (1280, 720), samples: int = 16, names: Iterable[str] | None = None, solo: bool = False, **camera_kwargs: Any) -> dict[str, Any]:
+    """Rend la scène vers ``path`` (PNG). ``names`` limite le cadrage ; ``solo`` masque les autres bâtiments."""
     path = os.path.abspath(path)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     configure_render(engine, resolution, samples)
@@ -198,7 +249,28 @@ def render_image(path: str, view: View = "perspective", engine: Engine = "eevee"
     frame_camera(view, names, **camera_kwargs)
     scene = bpy.context.scene
     scene.render.filepath = path
-    bpy.ops.render.render(write_still=True)
+    hidden: list[Any] = []
+    if solo and names:
+        keep = set(names) | {"Ground"}
+        for o in scene.objects:
+            if o.type == "MESH" and o.name not in keep and not o.hide_render:
+                o.hide_render = True
+                hidden.append(o)
+    if view == "street":
+        # Un voisin qui englobe la caméra (immeuble d'en face) masquerait tout : on le cache pour ce rendu.
+        cam_loc = scene.camera.matrix_world.translation
+        for o in scene.objects:
+            if o.type != "MESH" or o.name == "Ground" or o.hide_render or (names and o.name in set(names)):
+                continue
+            pts = [o.matrix_world @ Vector(c) for c in o.bound_box]
+            if min(p.x for p in pts) - 1.0 <= cam_loc.x <= max(p.x for p in pts) + 1.0 and min(p.y for p in pts) - 1.0 <= cam_loc.y <= max(p.y for p in pts) + 1.0:
+                o.hide_render = True
+                hidden.append(o)
+    try:
+        bpy.ops.render.render(write_still=True)
+    finally:
+        for o in hidden:
+            o.hide_render = False
     return {"path": path, "engine": scene.render.engine, "view": view, "resolution": list(resolution), "size_bytes": os.path.getsize(path) if os.path.exists(path) else 0}
 
 

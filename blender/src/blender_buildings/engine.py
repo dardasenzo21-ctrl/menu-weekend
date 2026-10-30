@@ -47,7 +47,7 @@ import bpy  # noqa: E402
 
 from blender_buildings import __version__  # noqa: E402
 from blender_buildings import exporters, scene  # noqa: E402
-from blender_buildings.builder import build_block, build_building, build_street, generate_street  # noqa: E402
+from blender_buildings.builder import build_block, build_building, build_site, build_street, generate_street  # noqa: E402
 from blender_buildings.materials import list_materials  # noqa: E402
 from blender_buildings.metrics import compute_metrics  # noqa: E402
 from blender_buildings.presets import get_preset, list_presets  # noqa: E402
@@ -95,6 +95,12 @@ def op_build_street(street: dict[str, Any], reset: bool = False) -> dict[str, An
     return build_street(street)
 
 
+def op_build_site(site: dict[str, Any], reset: bool = True, context: bool = True, ground: bool = True) -> dict[str, Any]:
+    if reset:
+        scene.reset_scene()
+    return build_site(site, context=context, ground=ground)
+
+
 def op_generate_street(street: dict[str, Any]) -> dict[str, Any]:
     return generate_street(street).model_dump(mode="json")
 
@@ -103,8 +109,8 @@ def op_metrics(spec: dict[str, Any] | None = None, preset: str | None = None, ov
     return compute_metrics(_resolve_spec(spec, preset, overrides))
 
 
-def op_render(path: str, view: str = "perspective", engine: str = "eevee", width: int = 1280, height: int = 720, samples: int = 16, objects: list[str] | None = None, azimuth: float = 35.0, elevation: float = 22.0) -> dict[str, Any]:
-    return scene.render_image(path, view=view, engine=engine, resolution=(int(width), int(height)), samples=int(samples), names=objects, azimuth=azimuth, elevation=elevation)  # type: ignore[arg-type]
+def op_render(path: str, view: str = "perspective", engine: str = "eevee", width: int = 1280, height: int = 720, samples: int = 16, objects: list[str] | None = None, azimuth: float = 35.0, elevation: float = 22.0, solo: bool = False, street_distance: float = 12.0, eye_height: float = 1.65, focal_mm: float = 35.0) -> dict[str, Any]:
+    return scene.render_image(path, view=view, engine=engine, resolution=(int(width), int(height)), samples=int(samples), names=objects, solo=solo, azimuth=azimuth, elevation=elevation, street_distance=street_distance, eye_height=eye_height, focal_mm=focal_mm)  # type: ignore[arg-type]
 
 
 def op_export(path: str, format: str | None = None, objects: list[str] | None = None, include_ground: bool = False) -> dict[str, Any]:
@@ -169,6 +175,7 @@ OPS: dict[str, Callable[..., dict[str, Any]]] = {
     "build_building": op_build_building,
     "build_block": op_build_block,
     "build_street": op_build_street,
+    "build_site": op_build_site,
     "generate_street": op_generate_street,
     "metrics": op_metrics,
     "render": op_render,

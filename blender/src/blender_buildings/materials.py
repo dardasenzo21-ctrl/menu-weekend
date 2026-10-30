@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 import bpy
@@ -106,3 +107,24 @@ def assign_materials(obj: Any, names: list[str]) -> None:
     obj.data.materials.clear()
     for n in names:
         obj.data.materials.append(get_material(n))
+
+
+def image_material(path: str, name: str | None = None, roughness: float = 0.9) -> Any:
+    """Matériau à texture image (orthophoto plaquée sur le sol, par exemple)."""
+    name = name or PREFIX + "img_" + os.path.basename(path)
+    mat = bpy.data.materials.get(name)
+    if mat is not None:
+        return mat
+    img = bpy.data.images.get(os.path.basename(path)) or bpy.data.images.load(path)
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    bsdf = nodes.get("Principled BSDF") or nodes.new("ShaderNodeBsdfPrincipled")
+    tex = nodes.new("ShaderNodeTexImage")
+    tex.image = img
+    links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+    _set_input(bsdf, ("Roughness",), roughness)
+    _set_input(bsdf, ("Specular IOR Level", "Specular"), 0.1)
+    mat.diffuse_color = (0.5, 0.5, 0.5, 1.0)
+    return mat

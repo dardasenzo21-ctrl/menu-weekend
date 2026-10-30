@@ -7,6 +7,7 @@ Exemples ::
     blender-buildings build --preset office --set floors=12 --out output/office --formats glb,fbx,png
     blender-buildings build --spec examples/haussmann_paris.json --out output/paris --views perspective,front
     blender-buildings street --preset haussmann --count 6 --out output/rue
+    blender-buildings site --address "8 rue Pasquier 75008 Paris" --out output/pasquier   # site réel
     blender-buildings mcp            # serveur MCP (stdio)
     blender-buildings api --port 8080
 """
@@ -104,6 +105,40 @@ def cmd_street(args: argparse.Namespace) -> None:
         _outputs(engine, args.out, "street", args.formats.split(","), args.views.split(","), args.render_engine, (args.width, args.height))
 
 
+def cmd_site(args: argparse.Namespace) -> None:
+    from .geo import site_from_address
+
+    os.makedirs(args.out, exist_ok=True)
+    site = site_from_address(args.address, radius_m=args.radius, context=not args.no_context, orthophoto=not args.no_ortho, ortho_dir=args.out, overrides=_parse_set(args.set))
+    print(f"{site.label} ({site.lat:.6f}, {site.lon:.6f}) — {len(site.context)} voisins — sources : {', '.join(site.sources)}")
+    for n in site.notes:
+        print("note :", n)
+    with open(os.path.join(args.out, "site.json"), "w", encoding="utf-8") as fh:
+        fh.write(site.model_dump_json(indent=1))
+    print(format_metrics(compute_metrics(site.target)))
+    if args.no_build:
+        return
+    with _engine(args) as engine:
+        r = engine.call("build_site", site=site.model_dump(mode="json"), reset=True)
+        tgt = r["target"]["object"]
+        base = "site"
+        for fmt in args.formats.split(","):
+            if fmt == "png":
+                for view in args.views.split(","):
+                    kw: dict[str, Any] = {"view": view, "engine": args.render_engine, "width": args.width, "height": args.height}
+                    if view == "street":
+                        kw.update(objects=[tgt], azimuth=site.facade_azimuth_deg, street_distance=max(10.0, site.street_distance_m), width=min(args.width, args.height), height=max(args.width, args.height))
+                    elif view in ("front", "back", "left", "right"):
+                        kw.update(objects=[tgt], solo=True)
+                    r2 = engine.call("render", path=os.path.join(args.out, f"{base}_{view}.png"), **kw)
+                    print("rendu :", r2["path"])
+            else:
+                r2 = engine.call("export", path=os.path.join(args.out, f"{base}.{fmt}"), format=fmt)
+                print("export :", r2["path"], f"({r2['size_bytes']} octets)")
+                r3 = engine.call("export", path=os.path.join(args.out, f"batiment.{fmt}"), format=fmt, objects=[tgt])
+                print("export :", r3["path"], f"({r3['size_bytes']} octets)")
+
+
 def cmd_mcp(args: argparse.Namespace) -> None:
     from .mcp_server import main as mcp_main
 
@@ -184,6 +219,18 @@ def build_parser() -> argparse.ArgumentParser:
     _add_engine_args(p)
     _add_output_args(p)
     p.set_defaults(fn=cmd_street)
+
+    p = sub.add_parser("site", help="Modélise un site réel à partir d'une adresse (IGN, cadastre, OSM, orthophoto)")
+    p.add_argument("--address", required=True)
+    p.add_argument("--radius", type=float, default=80.0, help="Rayon des voisins (m)")
+    p.add_argument("--no-context", action="store_true")
+    p.add_argument("--no-ortho", action="store_true")
+    p.add_argument("--no-build", action="store_true", help="Récupère les données et la spec sans lancer Blender")
+    p.add_argument("--set", action="append", help="Surcharge du bâtiment cible : clé.pointée=valeur")
+    _add_engine_args(p)
+    _add_output_args(p)
+    p.set_defaults(fn=cmd_site, views="street,perspective")
+    p.set_defaults(fn=cmd_site)
 
     p = sub.add_parser("mcp", help="Lance le serveur MCP (arguments passés à blender-buildings-mcp)")
     p.add_argument("rest", nargs=argparse.REMAINDER)

@@ -132,6 +132,7 @@ Claude Desktop : même bloc dans `claude_desktop_config.json`. Cursor / VS Code 
 | `build_building` | construit un bâtiment (preset + `overrides` ou spec complète) |
 | `build_street` | rue de N bâtiments variés par `seed` |
 | `build_block` | îlot : liste de bâtiments positionnés |
+| `build_from_address`, `fetch_site_data` | **site réel** depuis une adresse (IGN, cadastre, OSM, orthophoto) |
 | `render_preview` | PNG renvoyé **dans la conversation** (perspective, iso, front, back, left, right, top ; workbench / eevee / cycles) |
 | `export_model` | glb, gltf, fbx, obj, stl, usd/usdc/usda, ply, blend |
 | `save_blend`, `open_blend` | persistance .blend |
@@ -165,7 +166,7 @@ curl -sO localhost:8080/files/model_1700000000.glb
 | GET | `/health`, `/engine` | état |
 | GET | `/presets`, `/presets/{id}`, `/schema`, `/materials` | découverte |
 | POST | `/metrics` | métriques sans Blender |
-| POST | `/build`, `/street`, `/block` | construction |
+| POST | `/build`, `/street`, `/block`, `/site` | construction (`/site` : adresse réelle) |
 | POST | `/render`, `/export`, `/save` | sorties (fichiers servis sous `/files/{nom}`) |
 | GET | `/scene` · POST `/reset` · DELETE `/objects` | scène |
 | POST | `/python` | code bpy (403 si `BLENDER_BUILDINGS_ALLOW_PYTHON=0`) |
@@ -209,7 +210,33 @@ Exemples complets dans [`examples/`](examples/) (dont un îlot multi-bâtiments)
 `density_ratio`, `estimated_value_eur`. Ce sont des **ordres de grandeur de faisabilité** (emprise × niveaux,
 coefficient d'efficacité), pas un métré.
 
-## 7. Architecture
+## 7. Modéliser un bâtiment réel à partir d'une adresse
+
+```bash
+.venv/bin/blender-buildings site --address "8 rue Pasquier 75008 Paris" --out output/pasquier
+```
+
+ou, dans Claude Code : *« Modélise le 8 rue Pasquier à Paris 8e »* → outil `build_from_address`, puis `render_preview(view="street", azimuth=…)`.
+
+| Étape | Source ouverte | Ce qu'on en tire |
+|---|---|---|
+| Géocodage | Base Adresse Nationale, repli Nominatim | point adresse, libellé normalisé |
+| Bâtiment | IGN BD TOPO® (WFS) | **emprise au sol exacte** (origine cadastre), **hauteur à l'égout**, **nombre d'étages**, usage, matériaux, logements |
+| Parcelle | IGN Parcellaire Express (WFS) | contenance → CES, densité |
+| Tags | OpenStreetMap (Overpass) | niveaux, date, architecte, nom quand renseignés |
+| Voisins | IGN BD TOPO® | tous les bâtiments dans le rayon, en volumétrie avec leurs vraies hauteurs |
+| Fond de plan | IGN orthophoto HR (WMS, Lambert-93) | image plaquée sur le sol, nord en haut, alignée au mètre |
+
+Le bâtiment cible reçoit une façade parisienne paramétrique (pierre, fenêtres percées, balcons filants, mansarde zinc si
+≥ 5 niveaux), ajustable par `--set` / `overrides`. La vue `street` place la caméra sur le trottoir d'en face, orientée
+par l'azimut de façade déduit du point adresse. Exemple complet et rendus : [`examples/real/8-rue-pasquier-paris/`](examples/real/8-rue-pasquier-paris/).
+
+![8 rue Pasquier](examples/real/8-rue-pasquier-paris/02_vue_aerienne_ilot.png)
+
+Limites : Google Earth / Street View n'ont pas d'API ouverte, les façades sont donc reconstituées, pas photographiées ;
+les données IGN sont celles du millésime en ligne ; hors de France, seuls le géocodage (Nominatim) et OSM répondent.
+
+## 8. Architecture
 
 ```
 blender/
@@ -218,16 +245,17 @@ blender/
 │   ├── geometry.py     aires, périmètres, décalage de polygones — Python pur
 │   ├── metrics.py      métriques immobilières — Python pur
 │   ├── presets.py      9 typologies
+│   ├── geo.py          site réel : BAN/Nominatim, IGN BD TOPO, parcelle, OSM, orthophoto — Python pur
 │   ├── materials.py    matériaux nodaux PBR                       (bpy)
 │   ├── builder.py      génération du maillage, rues, îlots        (bpy)
-│   ├── scene.py        sol, soleil, caméra auto, rendu            (bpy)
+│   ├── scene.py        sol (uni ou orthophoto), soleil, caméra auto + vue piéton, rendu (bpy)
 │   ├── exporters.py    GLB/FBX/OBJ/STL/USD/PLY/blend              (bpy)
 │   ├── engine.py       processus Blender : commandes JSON ligne à ligne (module bpy OU binaire)
 │   ├── client.py       client du moteur (sous-processus, timeouts, redémarrage)
 │   ├── mcp_server.py   serveur MCP (stdio / Streamable HTTP)
 │   ├── api.py          FastAPI
 │   └── cli.py          CLI
-├── tests/              121 tests (pytest) : géométrie, specs, métriques, maillage, rendus, exports,
+├── tests/              131 tests (pytest) : géométrie, specs, métriques, maillage, rendus, exports,
 │                       moteur (crash, timeout, bruit stdout), MCP (client officiel en mémoire), API, CLI
 ├── examples/           specs JSON prêtes à l'emploi
 ├── scripts/            setup.sh, run-mcp.sh, run-api.sh, run-blender-mcp-headless.sh, install-blender-mcp-addon.sh
@@ -243,7 +271,7 @@ Le maillage est généré **sans booléens** : chaque façade est découpée en 
 embrasures, cadre, vitrage) ; corniches, acrotères, balcons, lucarnes et toitures sont des prismes explicites. Résultat
 déterministe, léger (un haussmannien ≈ 2 000 faces), avec UV par projection et slots de matériaux propres pour l'export.
 
-## 8. Tests
+## 9. Tests
 
 ```bash
 .venv/bin/python -m pytest -q                 # tout (≈ 3 min, rendus compris)
@@ -252,7 +280,7 @@ déterministe, léger (un haussmannien ≈ 2 000 faces), avec UV par projection 
 
 Un workflow GitHub Actions (`.github/workflows/blender-buildings.yml`) installe `bpy`, lance la suite et publie une démo GLB/PNG.
 
-## 9. Blender avec interface : l'add-on officiel « MCP for Blender »
+## 10. Blender avec interface : l'add-on officiel « MCP for Blender »
 
 Pour travailler *dans* Blender (voir le viewport, retoucher à la main, importer des assets PolyHaven/Sketchfab) :
 
@@ -268,7 +296,7 @@ session de mise en place (politique de sécurité sur l'exécution de code tiers
 
 Télémétrie de l'add-on désactivée par `DISABLE_TELEMETRY=1` dans `.mcp.json` et dans le script.
 
-## 10. Variables d'environnement
+## 11. Variables d'environnement
 
 | Variable | Défaut | Rôle |
 |---|---|---|
@@ -277,7 +305,7 @@ Télémétrie de l'add-on désactivée par `DISABLE_TELEMETRY=1` dans `.mcp.json
 | `BLENDER_BUILDINGS_OUTPUT` | `./output` | rendus, exports, .blend |
 | `BLENDER_BUILDINGS_ALLOW_PYTHON` | `1` | `0` pour interdire l'exécution de code bpy |
 
-## 11. Utiliser le résultat ailleurs
+## 12. Utiliser le résultat ailleurs
 
 * **Web / Three.js / React-Three-Fiber** : `export_model(format="glb")`.
 * **Unity / Unreal / Twinmotion** : `fbx` (matériaux par couleur) ou `usd`.

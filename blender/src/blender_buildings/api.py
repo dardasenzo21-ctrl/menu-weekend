@@ -50,8 +50,20 @@ class BlockRequest(BaseModel):
     reset: bool = True
 
 
+class SiteRequest(BaseModel):
+    address: str = Field(min_length=3)
+    radius_m: float = Field(80.0, ge=10, le=400)
+    context: bool = True
+    orthophoto: bool = True
+    overrides: dict[str, Any] | None = None
+    reset: bool = True
+
+
 class RenderRequest(BaseModel):
-    view: Literal["perspective", "iso", "front", "back", "left", "right", "top"] = "perspective"
+    view: Literal["perspective", "iso", "street", "front", "back", "left", "right", "top"] = "perspective"
+    objects: list[str] | None = None
+    solo: bool = False
+    street_distance: float = Field(12.0, ge=2, le=100)
     engine: Literal["workbench", "eevee", "cycles"] = "eevee"
     width: int = Field(1280, ge=64, le=8192)
     height: int = Field(720, ge=64, le=8192)
@@ -144,10 +156,23 @@ def create_app(engine: BlenderEngine | None = None) -> FastAPI:
         blk = BlockSpec(name=req.name, buildings=specs, site={"ground": True, "ground_size": req.ground_size})
         return get_engine().call("build_block", block=blk.model_dump(mode="json"), reset=req.reset)
 
+    @app.post("/site")
+    def site(req: SiteRequest) -> dict[str, Any]:
+        from .geo import site_from_address
+
+        try:
+            model = site_from_address(req.address, radius_m=req.radius_m, context=req.context, orthophoto=req.orthophoto, ortho_dir=_output_dir(), overrides=req.overrides)
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(status_code=502, detail=f"Données du site indisponibles : {exc}") from exc
+        r = get_engine().call("build_site", site=model.model_dump(mode="json"), reset=req.reset, context=req.context, ground=True)
+        r["target"]["summary"] = format_metrics(r["target"]["metrics"])
+        r["target_spec"] = model.target.model_dump(mode="json")
+        return r
+
     @app.post("/render")
     def render(req: RenderRequest) -> dict[str, Any]:
         path = os.path.join(_output_dir(), f"{_slug(req.name)}_{req.view}_{int(time.time())}.png")
-        r = get_engine().call("render", path=path, view=req.view, engine=req.engine, width=req.width, height=req.height, samples=req.samples, azimuth=req.azimuth, elevation=req.elevation)
+        r = get_engine().call("render", path=path, view=req.view, engine=req.engine, width=req.width, height=req.height, samples=req.samples, azimuth=req.azimuth, elevation=req.elevation, objects=req.objects, solo=req.solo, street_distance=req.street_distance)
         r["url"] = f"/files/{os.path.basename(path)}"
         return r
 

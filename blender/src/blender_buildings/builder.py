@@ -9,6 +9,7 @@ booléenne : la génération est déterministe, rapide et exportable proprement.
 from __future__ import annotations
 
 import math
+import os
 import random
 from dataclasses import dataclass, field
 from typing import Any, Sequence
@@ -582,3 +583,49 @@ def generate_street(street: StreetSpec | dict[str, Any]) -> BlockSpec:
 
 def build_street(street: StreetSpec | dict[str, Any]) -> dict[str, Any]:
     return build_block(generate_street(street))
+
+
+def build_site(site: "SiteModel | dict[str, Any]", context: bool = True, ground: bool = True) -> dict[str, Any]:
+    """Construit un site réel (``geo.site_from_address``) : cible détaillée, voisins en massing, orthophoto au sol."""
+    from .geo import SiteModel
+
+    if not isinstance(site, SiteModel):
+        site = SiteModel.model_validate(site)
+    coll = bpy.data.collections.new("Site " + site.address[:40])
+    bpy.context.scene.collection.children.link(coll)
+    target = build_building(site.target, collection=coll, with_site=False)
+    ctx_results = []
+    if context:
+        ctx_coll = bpy.data.collections.new("Context")
+        coll.children.link(ctx_coll)
+        for spec in site.context:
+            try:
+                ctx_results.append(build_building(spec, collection=ctx_coll, with_site=False))
+            except Exception as exc:  # noqa: BLE001 — un voisin mal formé ne doit pas bloquer le site
+                ctx_results.append({"object": None, "error": f"{spec.name}: {exc}"})
+    ground_info: dict[str, Any] | None = None
+    if ground:
+        from .scene import ensure_ground, ensure_textured_ground
+
+        if site.ortho and os.path.exists(site.ortho.path):
+            ensure_textured_ground(site.ortho.half_size_m, site.ortho.path)
+            ground_info = {"textured": True, "image": site.ortho.path, "half_size_m": site.ortho.half_size_m}
+        else:
+            ensure_ground(max(200.0, 4 * max(abs(c) for c in site.target.position[:2]) + 100), "asphalt")
+            ground_info = {"textured": False}
+    return {
+        "address": site.address,
+        "label": site.label,
+        "lat": site.lat,
+        "lon": site.lon,
+        "collection": coll.name,
+        "target": target,
+        "context_count": sum(1 for r in ctx_results if r.get("object")),
+        "context_errors": [r["error"] for r in ctx_results if r.get("error")],
+        "ground": ground_info,
+        "facade_azimuth_deg": site.facade_azimuth_deg,
+        "street_distance_m": site.street_distance_m,
+        "parcel": {k: v for k, v in (site.parcel or {}).items() if k != "ring"} or None,
+        "sources": site.sources,
+        "notes": site.notes,
+    }

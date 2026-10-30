@@ -12,6 +12,8 @@ license = { text = "MIT" }
 authors = [{ name = "Offstone / projets perso" }]
 dependencies = [
   "pydantic>=2.7",
+  "requests>=2.31",
+  "pyproj>=3.6",
 ]
 
 [project.optional-dependencies]

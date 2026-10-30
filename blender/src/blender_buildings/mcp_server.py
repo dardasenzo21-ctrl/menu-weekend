@@ -41,6 +41,7 @@ Flux typique :
 3. `render_preview` pour voir le résultat (perspective, élévations front/left/top…).
 4. `export_model` en GLB/FBX/OBJ/USD pour le réutiliser (Three.js, Unity, Twinmotion, Revit…).
 5. `compute_metrics` donne emprise, surface de plancher, surface utile, vitrage, nombre de logements, CES, valorisation.
+6. `build_from_address("8 rue Pasquier 75008 Paris")` modélise un bâtiment RÉEL (emprise cadastrale, hauteur IGN, voisins, orthophoto).
 
 Toutes les dimensions sont en mètres. La scène Blender persiste entre les appels : `reset_scene` pour repartir de zéro.
 """
@@ -119,11 +120,29 @@ def create_server(engine: BlenderEngine | None = None) -> MCPServer:
         block = {"name": name, "buildings": specs, "site": {"ground": True, "ground_size": ground_size}}
         return get_engine().call("build_block", block=block, reset=reset)
 
+    @_tool(server, description="Modélise un SITE RÉEL à partir d'une adresse française : géocodage, emprise cadastrale exacte et hauteur/étages IGN BD TOPO du bâtiment, parcelle, tags OpenStreetMap, bâtiments voisins en volumétrie (vraies hauteurs) et orthophoto IGN plaquée au sol. Puis `render_preview(view='street', azimuth=<facade_azimuth_deg>)` pour la vue piéton, `view='perspective'` pour l'îlot. `overrides` ajuste le bâtiment cible (ex. {'roof.kind': 'mansard', 'facade.material': 'brick_red'}).")
+    def build_from_address(address: str, radius_m: float = 80.0, context: bool = True, orthophoto: bool = True, overrides: dict[str, Any] | None = None, reset: bool = True) -> dict[str, Any]:
+        from .geo import site_from_address
+
+        site = site_from_address(address, radius_m=radius_m, context=context, orthophoto=orthophoto, ortho_dir=_output_dir(), overrides=overrides)
+        result = get_engine().call("build_site", site=site.model_dump(mode="json"), reset=reset, context=context, ground=True)
+        result["target"]["summary"] = format_metrics(result["target"]["metrics"])
+        result["target_spec"] = site.target.model_dump(mode="json")
+        result["hint"] = f"Vue piéton : render_preview(view='street', azimuth={site.facade_azimuth_deg}, street_distance={max(10.0, site.street_distance_m)})"
+        return result
+
+    @_tool(server, description="Récupère les données d'un site réel (adresse française) SANS construire : spec du bâtiment cible (emprise, hauteur, étages IGN), parcelle, voisins, sources. Utile pour inspecter/ajuster avant build_building(spec=...).")
+    def fetch_site_data(address: str, radius_m: float = 80.0) -> dict[str, Any]:
+        from .geo import site_from_address
+
+        site = site_from_address(address, radius_m=radius_m, context=True, orthophoto=False, osm=True)
+        return {"label": site.label, "lat": site.lat, "lon": site.lon, "target": site.target.model_dump(mode="json"), "metrics": compute_metrics(site.target), "parcel": {k: v for k, v in (site.parcel or {}).items() if k != "ring"}, "context_count": len(site.context), "facade_azimuth_deg": site.facade_azimuth_deg, "sources": site.sources, "notes": site.notes}
+
     # ---- sortie --------------------------------------------------------------------------------
-    @_tool(server, structured_output=False, description="Rend une image PNG de la scène et la retourne. `view` : perspective, iso, front, back, left, right, top (élévations orthographiques). `engine` : workbench (instantané, aplats), eevee (réaliste, ~10-30 s), cycles (lent). Retourne aussi le chemin du fichier.")
-    def render_preview(view: Literal["perspective", "iso", "front", "back", "left", "right", "top"] = "perspective", engine: Literal["workbench", "eevee", "cycles"] = "eevee", width: int = 1280, height: int = 720, samples: int = 16, azimuth: float = 35.0, elevation: float = 22.0, path: str | None = None) -> list[Image | str]:
+    @_tool(server, structured_output=False, description="Rend une image PNG de la scène et la retourne. `view` : perspective, iso, street (piéton face à la façade orientée vers `azimuth`, à `street_distance` m), front, back, left, right, top (élévations orthographiques). `objects` limite le cadrage à ces objets, `solo` masque les autres bâtiments. `engine` : workbench (instantané, aplats), eevee (réaliste, ~10-30 s), cycles (lent). Retourne aussi le chemin du fichier.")
+    def render_preview(view: Literal["perspective", "iso", "street", "front", "back", "left", "right", "top"] = "perspective", engine: Literal["workbench", "eevee", "cycles"] = "eevee", width: int = 1280, height: int = 720, samples: int = 16, azimuth: float = 35.0, elevation: float = 22.0, objects: list[str] | None = None, solo: bool = False, street_distance: float = 12.0, path: str | None = None) -> list[Image | str]:
         path = path or _out_path(f"render_{view}", "png")
-        result = get_engine().call("render", path=path, view=view, engine=engine, width=width, height=height, samples=samples, azimuth=azimuth, elevation=elevation)
+        result = get_engine().call("render", path=path, view=view, engine=engine, width=width, height=height, samples=samples, azimuth=azimuth, elevation=elevation, objects=objects, solo=solo, street_distance=street_distance)
         return [Image(path=path), f"Rendu {view} ({result['engine']}) enregistré : {path}"]
 
     @_tool(server, description="Exporte les bâtiments de la scène : glb, gltf, fbx, obj, stl, usd, usdc, usda, ply ou blend. Retourne le chemin et la taille du fichier.")
