@@ -1,0 +1,13 @@
+{
+  "name": "Bureaux Seine Ouest",
+  "use": "office",
+  "footprint": { "kind": "L", "width": 48.0, "depth": 24.0, "wing_width": 18.0, "wing_depth": 10.0 },
+  "floors": 10,
+  "floor_height": 3.7,
+  "ground_floor": { "height": 5.0, "storefront": true, "glazing_ratio": 0.9, "material": "stone_dark" },
+  "windows": { "style": "curtain", "mullion": 0.12, "spandrel": 0.8, "bay_width": 1.5, "recess": 0.05, "frame_material": "frame_black", "glass_material": "glass_tinted" },
+  "roof": { "kind": "parapet", "parapet_height": 1.5, "material": "metal_dark" },
+  "facade": { "material": "metal_light", "cornices": false, "trim_material": "metal_light" },
+  "site": { "ground": true, "ground_size": 160, "parcel_area": 3200 },
+  "price_per_m2": 8500
+}

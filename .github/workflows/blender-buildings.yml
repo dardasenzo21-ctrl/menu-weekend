@@ -1,0 +1,37 @@
+name: blender-buildings
+
+on:
+  push:
+    paths: ["blender/**", ".github/workflows/blender-buildings.yml"]
+  pull_request:
+    paths: ["blender/**", ".github/workflows/blender-buildings.yml"]
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: blender
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: blender/pyproject.toml
+      - name: Bibliothèques système pour bpy (EGL/GL)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libegl1 libgl1 libxi6 libxxf86vm1 libxfixes3 libxrender1 libxkbcommon0 libsm6 libxext6 libgomp1
+      - name: Installation (bpy ≈ 300 Mo)
+        run: pip install -e ".[all]"
+      - name: Tests purs Python (sans bpy)
+        run: python -m pytest tests/test_geometry.py tests/test_spec.py tests/test_metrics.py tests/test_cli.py -q
+      - name: Tests Blender (module bpy)
+        run: python -m pytest tests -q -p no:warnings
+      - name: Démo CLI (GLB + rendu)
+        run: blender-buildings build --preset haussmann --out output/ci --formats glb,png --render-engine workbench --width 640 --height 360
+      - uses: actions/upload-artifact@v4
+        with:
+          name: demo-haussmann
+          path: blender/output/ci

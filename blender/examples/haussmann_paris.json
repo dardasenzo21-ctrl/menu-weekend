@@ -1,0 +1,15 @@
+{
+  "name": "Haussmann rue de Rivoli",
+  "use": "residential",
+  "footprint": { "kind": "rect", "width": 22.0, "depth": 15.0 },
+  "floors": 7,
+  "floor_height": 3.1,
+  "ground_floor": { "height": 4.4, "storefront": true, "glazing_ratio": 0.65, "material": "limestone" },
+  "windows": { "style": "punched", "width": 1.3, "height": 2.3, "sill": 0.5, "bay_width": 2.9, "recess": 0.25, "frame_material": "frame_white" },
+  "roof": { "kind": "mansard", "mansard_inset": 1.8, "mansard_height": 2.9, "height": 1.0, "dormers": true, "material": "zinc" },
+  "balconies": { "floors": [2, 5], "depth": 0.8, "continuous": true, "material": "limestone", "railing_material": "metal_dark" },
+  "facade": { "material": "limestone", "base_material": "stone_dark", "base_height": 0.9, "cornices": true, "cornice_floors": [1, 2, 5, 7], "cornice_depth": 0.3, "cornice_height": 0.25, "trim_material": "limestone" },
+  "site": { "ground": true, "ground_size": 100, "parcel_area": 520 },
+  "price_per_m2": 12500,
+  "metadata": { "ville": "Paris 1er", "source": "exemple" }
+}

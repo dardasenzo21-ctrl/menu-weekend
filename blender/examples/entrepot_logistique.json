@@ -1,0 +1,14 @@
+{
+  "name": "Plateforme logistique A1",
+  "use": "logistics",
+  "footprint": { "kind": "rect", "width": 150.0, "depth": 70.0 },
+  "floors": 1,
+  "floor_height": 11.0,
+  "ground_floor": { "height": 12.0, "storefront": false, "material": "metal_light" },
+  "windows": { "style": "ribbon", "height": 1.5, "sill": 8.0, "bay_width": 15.0, "mullion": 0.3, "recess": 0.05, "frame_material": "frame_black" },
+  "roof": { "kind": "parapet", "parapet_height": 0.8, "material": "metal_light" },
+  "facade": { "material": "metal_light", "base_material": "concrete", "base_height": 3.0, "cornices": false, "trim_material": "metal_light" },
+  "site": { "ground": true, "ground_size": 400, "parcel_area": 32000 },
+  "efficiency_ratio": 0.96,
+  "price_per_m2": 1100
+}

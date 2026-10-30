@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "blender-buildings": {
+      "command": "bash",
+      "args": [
+        "blender/scripts/run-mcp.sh"
+      ],
+      "env": {
+        "BLENDER_BACKEND": "auto",
+        "BLENDER_BUILDINGS_OUTPUT": "blender/output"
+      }
+    },
+    "blender": {
+      "command": "uvx",
+      "args": [
+        "mcp-for-blender"
+      ],
+      "env": {
+        "DISABLE_TELEMETRY": "1"
+      }
+    }
+  }
+}

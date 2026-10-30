@@ -1,0 +1,16 @@
+{
+  "name": "Résidence Confluence",
+  "use": "residential",
+  "footprint": { "kind": "U", "width": 40.0, "depth": 22.0, "wing_width": 16.0, "wing_depth": 12.0 },
+  "floors": 6,
+  "floor_height": 2.9,
+  "basement_levels": 1,
+  "ground_floor": { "height": 3.6, "storefront": true, "glazing_ratio": 0.6, "material": "concrete" },
+  "windows": { "style": "punched", "width": 2.0, "height": 2.15, "sill": 0.3, "bay_width": 3.8, "recess": 0.2, "frame_material": "frame_black" },
+  "roof": { "kind": "parapet", "parapet_height": 1.1, "material": "concrete" },
+  "balconies": { "floors": [1, 2, 3, 4, 5], "depth": 1.6, "continuous": false, "material": "concrete", "railing_material": "frame_black" },
+  "facade": { "material": "brick_dark", "cornices": false, "trim_material": "concrete" },
+  "site": { "ground": true, "ground_size": 140, "parcel_area": 1800 },
+  "unit_average_area": 62,
+  "price_per_m2": 5200
+}
