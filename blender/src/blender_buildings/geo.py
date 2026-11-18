@@ -318,6 +318,9 @@ def building_to_spec(b: GeoBuilding, name: str, detailed: bool, overrides: dict[
     ring = [(x - cx, y - cy) for x, y in b.ring]
     ground_h = 3.6 if levels > 1 else h
     floor_h = (h - ground_h) / (levels - 1) if levels > 1 else 3.0
+    if floor_h > 6.0 and levels > 1:  # étages IGN sous-estimés (ex. 2 niveaux pour 17 m) : on redécoupe
+        levels = max(levels, math.ceil(h / 3.2))
+        floor_h = (h - ground_h) / (levels - 1)
     if floor_h < 2.2:  # hauteur IGN incohérente avec le nombre d'étages : on répartit
         floor_h = max(2.2, h / levels)
         ground_h = floor_h

@@ -104,6 +104,13 @@ def test_building_to_spec_handles_tall_single_level_halls():
     assert spec.wall_height() == pytest.approx(19.9, abs=0.01)
 
 
+def test_building_to_spec_resplits_underestimated_levels():
+    b = geo.GeoBuilding(id="x", ring=[(0, 0), (20, 0), (20, 15), (0, 15)], height_m=17.2, levels=2)
+    spec = geo.building_to_spec(b, "X", detailed=False)
+    assert spec.floors >= 5 and spec.floor_height <= 4.0
+    assert spec.wall_height() == pytest.approx(17.2, abs=0.01)
+
+
 def test_clean_ring_removes_closure_and_duplicates():
     ring = [(0, 0), (10, 0), (10, 0.1), (10, 10), (0, 10), (0, 0)]
     out = geo._clean_ring(ring)

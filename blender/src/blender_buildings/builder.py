@@ -116,13 +116,18 @@ class MeshBuilder:
             u0, u1 = upper[i], upper[(i + 1) % n]
             self.face([(*l0, z0), (*l1, z0), (*u1, z1), (*u0, z1)], material)
 
-    def to_object(self, name: str, collection: Any | None = None) -> Any:
+    def to_object(self, name: str, collection: Any | None = None, library_materials: bool = True) -> Any:
+        """Crée l'objet. ``library_materials=False`` : les noms désignent des matériaux de la scène (créés vides s'ils manquent)."""
         mesh = bpy.data.meshes.new(name)
         mesh.from_pydata(self.verts, [], self.faces)
         mesh.validate(verbose=False)
         obj = bpy.data.objects.new(name, mesh)
         # Les slots doivent exister AVANT d'écrire material_index (materials.clear() remet les index à 0).
-        assign_materials(obj, self.materials)
+        if library_materials:
+            assign_materials(obj, self.materials)
+        else:
+            for n in self.materials:
+                obj.data.materials.append(bpy.data.materials.get(n) or bpy.data.materials.new(n))
         if len(mesh.polygons) == len(self.face_mats):
             mesh.polygons.foreach_set("material_index", self.face_mats)
         else:  # validate() a pu retirer des faces dégénérées
