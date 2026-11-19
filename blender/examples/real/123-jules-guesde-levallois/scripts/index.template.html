@@ -13,7 +13,7 @@
   #app{ position:relative; height:100%; min-height:300px; overflow:hidden }
   #app canvas{ display:block; width:100%; height:100%; cursor:grab; touch-action:none } #app canvas:active{ cursor:grabbing }
   [hidden]{ display:none!important }
-  #charge{ position:absolute; inset:0; display:grid; place-items:center; text-align:center; font-weight:700; padding:0 24px } #charge small{ display:block; font-weight:400; color:var(--muted); margin-top:6px }
+  #charge{ position:absolute; inset:0; display:grid; place-items:center; text-align:center; font-weight:700; padding:0 24px; pointer-events:none } #charge > div{ background:rgba(11,11,11,.82); color:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 18px; max-width:min(420px,100%); backdrop-filter:blur(8px) } #charge small{ display:block; font-weight:400; color:#C9C9C9; margin-top:6px; font-size:13px }
   .titre{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:12px 16px; backdrop-filter:blur(10px); position:absolute; top:calc(16px + env(safe-area-inset-top,0px)); left:max(16px,env(safe-area-inset-left,0px)); pointer-events:none; max-width:min(380px, calc(100% - 32px)) }
   .titre h1{ margin:0; font-size:24px; line-height:1.2; letter-spacing:-.01em; text-wrap:balance } .titre p{ margin:2px 0 0; color:var(--muted); font-size:14px }
   .titre em{ font-family:var(--serif); font-style:italic; font-weight:400; color:var(--bleu); font-size:1.18em }
@@ -64,7 +64,7 @@
   @media (prefers-reduced-motion:reduce){ * { transition:none!important } }
 </style>
 <div id="app">
-  <div id="charge">Chargement de la maquette…<small id="chargetxt">quartier, façades, textures</small></div>
+  <div id="charge"><div><span id="chargetitre">Chargement de la maquette…</span><small id="chargetxt">quartier, façades, textures</small></div></div>
   <div class="titre"><img class="logo" alt="Offstone" src="__LOGO__"><h1>123 rue Jules Guesde <em>Levallois</em></h1><p>Bureaux · R+7 sur 3 sous-sols · maquette v2, quartier IGN et textures</p></div>
   <div class="outils"><button id="visite" aria-pressed="false">Visite à pied</button><button id="tourne" aria-pressed="true">Rotation</button><button id="noms" aria-pressed="false">Étiquettes</button><button id="vois" aria-pressed="true">Quartier</button><button id="qual" aria-pressed="true">Occlusion</button><button id="fond">Fond blanc</button><button id="src" aria-pressed="false">Sources</button></div>
   <div class="boussole" role="img" aria-label="Boussole, nord"><i id="boussole"><b>N</b></i></div>
@@ -94,7 +94,7 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js';
+import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {Sky} from 'three/addons/objects/Sky.js';
 import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
 import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
@@ -107,7 +107,7 @@ var ROOMS=__ROOMS__, FICHE=__FICHE__, Z=__Z__;
 var NIV=[['Tout',99],['7e',7],['6e',6],['5e',5],['4e',4],['3e',3],['2e',2],['1er',1],['RDC',0],['-1',-1],['-2',-2]];
 var el=document.getElementById('app'),charge=document.getElementById('charge'),chargetxt=document.getElementById('chargetxt'),calme=matchMedia('(prefers-reduced-motion: reduce)').matches,tactile=matchMedia('(pointer:coarse)').matches;
 var lite=tactile||innerWidth<700||innerHeight<500;   // téléphone / tablette : rendu direct, ombres et textures réduites, intérieurs à la demande
-function panne(t){charge.hidden=false;charge.firstChild.textContent='La 3D ne démarre pas sur cet appareil.';chargetxt.textContent=t}
+function panne(t){charge.hidden=false;document.getElementById('chargetitre').textContent='La 3D ne démarre pas sur cet appareil.';chargetxt.textContent=t}
 addEventListener('error',function(e){if(!window.__ok)panne(String(e.message||e.error||'erreur').slice(0,160))});
 var r=new THREE.WebGLRenderer({antialias:lite,preserveDrawingBuffer:!lite,powerPreference:'high-performance'}); r.setPixelRatio(Math.min(devicePixelRatio,lite?1.25:2));
 r.domElement.addEventListener('webglcontextlost',function(e){e.preventDefault();panne('Mémoire graphique insuffisante : ferme d’autres onglets et recharge.')}); r.outputColorSpace=THREE.SRGBColorSpace; r.toneMapping=THREE.ACESFilmicToneMapping; r.toneMappingExposure=.85; r.shadowMap.enabled=true; r.shadowMap.type=THREE.PCFSoftShadowMap; el.insertBefore(r.domElement,el.firstChild);
@@ -320,7 +320,7 @@ window.__pose=function(k,x,y,yw,pt){if(!marche)visite(true);pos.k=k;cur=k;pos.x=
 function size(){var w=el.clientWidth,h=el.clientHeight;r.setSize(w,h,false);comp.setSize(w,h);gtao.setSize(w,h);smaa.setSize(w,h);cam.aspect=w/h;cam.fov=marche?(w<h?72:62):(w<h?52:30);cam.updateProjectionMatrix()}
 addEventListener('resize',size);size();cam.position.set(lite?-105:-88,lite?66:52,lite?96:80);ctl.target.set(0,9,0);ctl.update();fiche();pastille();soleil();environnement();synchro();
 [].forEach.call(document.querySelectorAll('#niveaux button'),function(b){b.setAttribute('aria-pressed',b.dataset.k==99)});
-var draco=new DRACOLoader().setDecoderPath('draco/').setDecoderConfig({type:'js'}),loader=new GLTFLoader().setDRACOLoader(draco),intOK=false,intEnCours=false;
+var loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder),intOK=false,intEnCours=false;
 function interieurs(cb){if(intOK){if(cb)cb();return}if(intEnCours)return;intEnCours=true;loader.load('le123_int.gltf.json',function(g2){integrer(g2);intOK=true;window.__ok=obj.length;if(cb)cb()},undefined,function(){intEnCours=false})}
 function integrer(g){g.scene.traverse(function(o){if(!o.isMesh)return;var nm=o.name||(o.parent&&o.parent.name)||'',k=niv(nm);if(k===null)k=niv(o.parent&&o.parent.name||'');if(k===null)return;
     o.userData.k=k;o.userData.pl=/plafond/.test(nm)||/plafond/.test(o.parent&&o.parent.name||'');o.userData.mob=/_mob/.test(nm)||/_mob/.test(o.parent&&o.parent.name||'');o.userData.fp=/_fp/.test(nm);o.userData.porte=/_porte/.test(nm);o.userData.clo=/_clo/.test(nm)||/_clo/.test(o.parent&&o.parent.name||'');o.userData.up=0;o.userData.vitre=(o.material.name==='Vitre');obj.push(o);
@@ -329,7 +329,7 @@ function integrer(g){g.scene.traverse(function(o){if(!o.isMesh)return;var nm=o.n
   sc.add(g.scene);apply();soleil()}
 loader.load('le123_ext.gltf.json',function(g){integrer(g);charge.hidden=true;var h=location.hash.slice(1);if(h){var b=document.getElementById(h);if(b)b.click()}
   window.__ok=obj.length;if(!lite)interieurs();
-},function(ev){chargetxt.textContent=ev.total?Math.round(100*ev.loaded/ev.total)+' % du quartier':Math.round(ev.loaded/1048576)+' Mo reçus'},function(e){panne('Le fichier de la maquette ne se charge pas : '+String(e&&e.message||e).slice(0,120))});
+},function(ev){chargetxt.textContent=ev.total?Math.round(100*ev.loaded/ev.total)+' % du quartier':Math.round(ev.loaded/1048576)+' Mo reçus'},function(e){panne('Le fichier de la maquette ne se charge pas : '+String(e&&e.message||e).slice(0,160));console.error(e)});
 var tp=0;
 (function loop(n){requestAnimationFrame(loop);n=n||0;if(anim)anim(n);boussole();var dt_=Math.min(.05,(n-(tp||n))/1000);tp=n;if(ANI&&sol.visible){VT.value+=dt_;trafic(dt_)}
   obj.forEach(function(o){var b=o.userData.y0;if(b===undefined)b=o.userData.y0=o.position.y;var t=b+(o.userData.up?80:0);if(Math.abs(o.position.y-t)>.05){o.position.y+=(t-o.position.y)*(calme?1:.12);if(o.userData.up&&o.position.y-b>75)o.visible=false}else o.position.y=t});

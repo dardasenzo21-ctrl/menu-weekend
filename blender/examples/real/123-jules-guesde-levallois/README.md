@@ -40,7 +40,7 @@ voisins au-delà de 95 m masqués, intérieurs chargés seulement quand on chois
 
 ```bash
 # depuis blender/ (binaire Blender requis pour décoder le glTF meshopt de la v1 et compresser en Draco)
-/opt/blender/blender -b --python examples/real/123-jules-guesde-levallois/scripts/inspect.py       # import v1
+/opt/blender/blender -b --python examples/real/123-jules-guesde-levallois/scripts/inspect_v1.py       # import v1
 /opt/blender/blender -b --python examples/real/123-jules-guesde-levallois/scripts/bake_textures.py # textures PBR
 /opt/blender/blender -b --python examples/real/123-jules-guesde-levallois/scripts/build_v2.py      # voisins IGN, ortho, meneaux, voitures, UV
 /opt/blender/blender -b --python examples/real/123-jules-guesde-levallois/scripts/fix_v2.py && /opt/blender/blender -b --python examples/real/123-jules-guesde-levallois/scripts/export_v2.py
