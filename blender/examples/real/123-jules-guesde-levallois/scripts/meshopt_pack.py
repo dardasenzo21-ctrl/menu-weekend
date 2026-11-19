@@ -62,11 +62,12 @@ def pack(src, dst):
                 accessors.append({'bufferView':vi,'componentType':ct,'count':cnt,'type':'SCALAR'}); p['indices']=len(accessors)-1
             p.pop('extensions',None)
     g['accessors']=accessors; g['bufferViews']=views
-    g['buffers']=[{'byteLength':len(comp),'uri':'data:application/octet-stream;base64,'+base64.b64encode(bytes(comp)).decode('ascii')},{'byteLength':fallback_len,'extensions':{'EXT_meshopt_compression':{'fallback':True}}}]
+    # tampon 0 sans uri : fourni par la page sous forme de GLB assemblé en mémoire (pas de fetch de data: URI, bloqué par le CSP)
+    g['buffers']=[{'byteLength':len(comp)},{'byteLength':fallback_len,'extensions':{'EXT_meshopt_compression':{'fallback':True}}}]
     g['extensionsUsed']=['EXT_meshopt_compression','KHR_mesh_quantization']; g['extensionsRequired']=['EXT_meshopt_compression','KHR_mesh_quantization']
     for k in ('images','textures','samplers'): g.pop(k,None)
     for m in g.get('materials',[]):
         pbr=m.get('pbrMetallicRoughness',{}); pbr.pop('baseColorTexture',None); pbr.pop('metallicRoughnessTexture',None); m.pop('normalTexture',None); m.pop('occlusionTexture',None); m.pop('emissiveTexture',None)
-    out=json.dumps(g,separators=(',',':')); open(dst,'w').write(out)
+    out=json.dumps({'gltf':g,'bin':base64.b64encode(bytes(comp)).decode('ascii')},separators=(',',':')); open(dst,'w').write(out)
     print(os.path.basename(dst), len(out)//1024,'KB', 'meshes',len(g['meshes']),'compressé',len(comp)//1024,'KB','brut',fallback_len//1024,'KB')
 pack(sys.argv[1], sys.argv[2])

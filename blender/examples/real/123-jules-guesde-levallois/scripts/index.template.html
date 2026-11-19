@@ -321,15 +321,23 @@ function size(){var w=el.clientWidth,h=el.clientHeight;r.setSize(w,h,false);comp
 addEventListener('resize',size);size();cam.position.set(lite?-82:-70,lite?74:62,lite?30:26);ctl.target.set(0,9,0);ctl.update();fiche();pastille();soleil();environnement();synchro();
 [].forEach.call(document.querySelectorAll('#niveaux button'),function(b){b.setAttribute('aria-pressed',b.dataset.k==99)});
 var loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder),intOK=false,intEnCours=false;
-function interieurs(cb){if(intOK){if(cb)cb();return}if(intEnCours)return;intEnCours=true;loader.load('le123_int.gltf.json',function(g2){integrer(g2);intOK=true;window.__ok=obj.length;if(cb)cb()},undefined,function(){intEnCours=false})}
+/* Chargement : le JSON contient la scène glTF et son tampon binaire en base64 ; on assemble un GLB en mémoire (le chargeur ne fait alors aucun fetch de data: URI, interdit ici). */
+function b64(s){var bin=atob(s),n=bin.length,u=new Uint8Array(n);for(var i=0;i<n;i++)u[i]=bin.charCodeAt(i);return u}
+function glb(d){var js=new TextEncoder().encode(JSON.stringify(d.gltf)),bn=b64(d.bin),jl=(js.length+3)&~3,bl=(bn.length+3)&~3,tot=12+8+jl+8+bl,buf=new ArrayBuffer(tot),dv=new DataView(buf),u8=new Uint8Array(buf);
+  dv.setUint32(0,0x46546C67,true);dv.setUint32(4,2,true);dv.setUint32(8,tot,true);dv.setUint32(12,jl,true);dv.setUint32(16,0x4E4F534A,true);u8.set(js,20);for(var i=20+js.length;i<20+jl;i++)u8[i]=0x20;
+  dv.setUint32(20+jl,bl,true);dv.setUint32(24+jl,0x004E4942,true);u8.set(bn,28+jl);return buf}
+function charger(url,ok,prog,ko){fetch(url).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status+' sur '+url);var total=+r.headers.get('content-length')||0,recu=0,rd=r.body&&r.body.getReader?r.body.getReader():null;if(!rd)return r.json();var parts=[];
+    return rd.read().then(function lire(x){if(x.done){var all=new Uint8Array(recu),o=0;parts.forEach(function(p){all.set(p,o);o+=p.length});return JSON.parse(new TextDecoder().decode(all))}parts.push(x.value);recu+=x.value.length;if(prog)prog(recu,total);return rd.read().then(lire)})})
+  .then(function(d){loader.parse(glb(d),'',ok,ko)}).catch(ko)}
+function interieurs(cb){if(intOK){if(cb)cb();return}if(intEnCours)return;intEnCours=true;charger('le123_int.gltf.json',function(g2){integrer(g2);intOK=true;window.__ok=obj.length;if(cb)cb()},null,function(e){intEnCours=false;console.error(e)})}
 function integrer(g){g.scene.traverse(function(o){if(!o.isMesh)return;if(!o.geometry.attributes.normal){o.geometry.computeVertexNormals();if(o.material.flatShading){o.material.flatShading=false;o.material.needsUpdate=true}}var nm=o.name||(o.parent&&o.parent.name)||'',k=niv(nm);if(k===null)k=niv(o.parent&&o.parent.name||'');if(k===null)return;
     o.userData.k=k;o.userData.pl=/plafond/.test(nm)||/plafond/.test(o.parent&&o.parent.name||'');o.userData.mob=/_mob/.test(nm)||/_mob/.test(o.parent&&o.parent.name||'');o.userData.fp=/_fp/.test(nm);o.userData.porte=/_porte/.test(nm);o.userData.clo=/_clo/.test(nm)||/_clo/.test(o.parent&&o.parent.name||'');o.userData.up=0;o.userData.vitre=(o.material.name==='Vitre');obj.push(o);
     if(k==='V'){o.geometry.computeBoundingSphere();var cS=o.geometry.boundingSphere.center;o.userData.loin=Math.hypot(cS.x,cS.z)>95;o.updateWorldMatrix(true,false);o.geometry.computeBoundingBox();o.userData.bb=o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld).expandByScalar(1.5)}
     o.castShadow=!(lite&&k==='V');o.receiveShadow=true;o.material.side=THREE.DoubleSide;matiere(o);if(o.userData.vitre)o.castShadow=false});
   sc.add(g.scene);apply();soleil()}
-loader.load('le123_ext.gltf.json',function(g){integrer(g);charge.hidden=true;var h=location.hash.slice(1);if(h){var b=document.getElementById(h);if(b)b.click()}
+charger('le123_ext.gltf.json',function(g){integrer(g);charge.hidden=true;var h=location.hash.slice(1);if(h){var b=document.getElementById(h);if(b)b.click()}
   window.__ok=obj.length;if(!lite)interieurs();
-},function(ev){chargetxt.textContent=ev.total?Math.round(100*ev.loaded/ev.total)+' % du quartier':Math.round(ev.loaded/1048576)+' Mo reçus'},function(e){panne('Le fichier de la maquette ne se charge pas : '+String(e&&e.message||e).slice(0,160));console.error(e)});
+},function(recu,total){chargetxt.textContent=total?Math.round(100*recu/total)+' % du quartier':(recu/1048576).toFixed(1)+' Mo reçus'},function(e){panne('Le fichier de la maquette ne se charge pas : '+String(e&&e.message||e).slice(0,160));console.error(e)});
 var tp=0,nf=0;
 function dedans(){var ch=false;obj.forEach(function(o){if(o.userData.k!=='V'||!o.userData.bb)return;var d=o.userData.bb.containsPoint(cam.position);if(d!==!!o.userData.dedans){o.userData.dedans=d;ch=true}});if(ch)apply()}
 (function loop(n){requestAnimationFrame(loop);n=n||0;if(anim)anim(n);if(++nf%12===0)dedans();boussole();var dt_=Math.min(.05,(n-(tp||n))/1000);tp=n;if(ANI&&sol.visible){VT.value+=dt_;trafic(dt_)}
