@@ -38,7 +38,10 @@ def pack(src, dst):
         poss=[read(p['attributes']['POSITION']) for p in mesh['primitives']]
         allp=np.concatenate(poss); mn=allp.min(0); mx=allp.max(0); ext=np.maximum(mx-mn,1e-6)
         for ni in mesh_nodes.get(mi,[]):
-            nd=g['nodes'][ni]; nd['translation']=[float(x) for x in mn]; nd['scale']=[float(x/65535.0) for x in ext]
+            nd=g['nodes'][ni]
+            assert 'rotation' not in nd and 'matrix' not in nd and nd.get('scale',[1,1,1])==[1,1,1], f'nœud {ni} : transformation non gérée'
+            t0=nd.get('translation',[0,0,0])
+            nd['translation']=[float(t0[i]+mn[i]) for i in range(3)]; nd['scale']=[float(x/65535.0) for x in ext]
         for p,pos in zip(mesh['primitives'],poss):
             q=np.rint((pos-mn)/ext*65535.0).astype(np.uint16); n=q.shape[0]
             qp=np.zeros((n,4),dtype=np.uint16); qp[:,:3]=q
