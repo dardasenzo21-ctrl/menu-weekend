@@ -1,4 +1,5 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Le 123 Levallois</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&family=Instrument+Serif:ital@1&display=swap">
@@ -41,23 +42,24 @@
   .boussole b{ position:absolute; left:0; right:0; top:-1px; text-align:center; font-size:8px; line-height:10px; font-weight:700; color:var(--fg) }
   .sources{ position:absolute; left:50%; transform:translateX(-50%); top:calc(16px + env(safe-area-inset-top,0px)); max-width:min(560px,calc(100% - 32px)); background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 16px; backdrop-filter:blur(10px); font-size:14px; z-index:3 }
   .sources h2{ margin:0 0 6px; font-size:16px } .sources ul{ margin:0; padding-left:18px; display:grid; gap:2px } .sources p{ margin:6px 0 0; color:var(--muted) } .sources button{ position:absolute; top:6px; right:6px; min-width:36px }
-  @media (max-width:560px){
-    .titre{ padding:8px 12px } .logo{ height:16px; margin-bottom:6px } .titre h1{ font-size:19px } .titre p{ font-size:12.5px; line-height:1.35 }
-    .outils{ top:calc(104px + env(safe-area-inset-top,0px)); left:max(16px,env(safe-area-inset-left,0px)); right:auto; max-width:calc(100% - 32px); justify-content:flex-start }
-    .outils button,.amenag button,.niveaux button{ font-size:14px; min-height:34px; padding:3px 11px }
-    .amenag{ top:calc(216px + env(safe-area-inset-top,0px)); bottom:auto; transform:none; grid-auto-flow:column; align-items:center; padding:4px; border-radius:999px } .amenag b{ padding:0 4px 0 8px }
-    .niveaux{ top:calc(216px + env(safe-area-inset-top,0px)); transform:none; gap:2px; padding:4px }
-    .fiche{ right:calc(max(16px,env(safe-area-inset-right,0px)) + 76px); max-width:none; bottom:calc(26px + env(safe-area-inset-bottom,0px)); padding:10px 12px } .fiche ul{ max-height:20vh }
-    .soleil{ width:150px; right:auto; bottom:auto; left:max(16px,env(safe-area-inset-left,0px)); top:calc(266px + env(safe-area-inset-top,0px)) } .soleil label{ font-size:12px; padding:4px 8px }
-    .carte{ width:140px; bottom:calc(108px + env(safe-area-inset-bottom,0px)) } .carte canvas{ width:140px; height:140px }
-    .aide{ display:none }
-  }
-  @media (max-height:500px) and (min-width:561px){
-    .titre{ padding:8px 12px } .logo{ height:14px; margin-bottom:4px } .titre h1{ font-size:17px } .titre p{ font-size:12px; line-height:1.3 }
-    .outils button,.amenag button,.niveaux button{ font-size:13px; min-height:32px; min-width:40px; padding:2px 10px }
-    .niveaux{ top:calc(60px + env(safe-area-inset-top,0px)); transform:none; grid-template-rows:repeat(5,auto); grid-auto-flow:column; gap:2px; padding:4px; border-radius:18px }
-    .amenag{ top:calc(100px + env(safe-area-inset-top,0px)); transform:none; grid-auto-flow:column; align-items:center; padding:4px; border-radius:999px } .amenag b{ padding:0 4px 0 8px }
-    .fiche{ max-width:300px; padding:8px 12px } .fiche ul{ max-height:24vh }
+  /* Téléphone (< 700 px) : une barre en bas (menu, visite, soleil), niveaux en bandeau défilant, fiche repliée en pastille, réglages dans une feuille. */
+  .barre,.pastille,.feuille{ display:none }
+  @media (max-width:700px){
+    .titre{ padding:8px 12px; max-width:calc(100% - 32px) } .logo{ height:13px; margin-bottom:4px } .titre h1{ font-size:16px } .titre p{ display:none }
+    .outils,.amenag,.boussole,.mention,.aide{ display:none }
+    .barre{ display:flex; position:absolute; left:0; right:0; bottom:0; padding:8px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px)); gap:8px; align-items:center; background:var(--panel); border-top:1px solid var(--line); backdrop-filter:blur(10px) }
+    .barre button{ min-height:40px; min-width:40px; padding:4px 12px; font-size:14px; background:transparent; border-color:var(--line) }
+    .barre .sol{ flex:1; display:flex; align-items:center; gap:6px; min-width:0; font-size:12px; color:var(--muted) } .barre .sol input{ flex:1; min-width:0; accent-color:var(--bleu) } .barre .sol b{ color:var(--fg); font-variant-numeric:tabular-nums; min-width:42px; text-align:right }
+    .soleil{ display:none }
+    .niveaux{ top:auto; bottom:calc(64px + env(safe-area-inset-bottom,0px)); left:max(12px,env(safe-area-inset-left,0px)); right:max(12px,env(safe-area-inset-right,0px)); transform:none; display:flex; overflow-x:auto; gap:4px; padding:4px; border-radius:999px; scrollbar-width:none } .niveaux::-webkit-scrollbar{ display:none }
+    .niveaux button{ flex:0 0 auto; min-height:34px; min-width:44px; padding:2px 10px; font-size:14px }
+    .pastille{ display:block; position:absolute; left:max(12px,env(safe-area-inset-left,0px)); bottom:calc(112px + env(safe-area-inset-bottom,0px)); max-width:calc(100% - 24px); background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:6px 14px; font-size:14px; font-weight:600; backdrop-filter:blur(10px); text-align:left }
+    .fiche{ display:none } .fiche.ouverte{ display:block; left:max(12px,env(safe-area-inset-left,0px)); right:max(12px,env(safe-area-inset-right,0px)); max-width:none; bottom:calc(154px + env(safe-area-inset-bottom,0px)) } .fiche ul{ max-height:28vh }
+    .feuille{ display:none; position:absolute; left:0; right:0; bottom:calc(58px + env(safe-area-inset-bottom,0px)); background:var(--panel); border-top:1px solid var(--line); backdrop-filter:blur(12px); padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px)); z-index:4 }
+    .feuille.ouverte{ display:block } .feuille h3{ margin:0 0 6px; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em } .feuille .grp{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px } .feuille button{ background:transparent; border-color:var(--line); min-height:38px; font-size:14px }
+    .visite .niveaux{ bottom:calc(64px + env(safe-area-inset-bottom,0px)) } .visite .pastille{ display:none } .visite .carte{ right:max(12px,env(safe-area-inset-right,0px)); top:calc(70px + env(safe-area-inset-top,0px)); bottom:auto; width:130px } .visite .carte canvas{ width:130px; height:130px }
+    .joy{ left:max(14px,env(safe-area-inset-left,0px)); bottom:calc(112px + env(safe-area-inset-bottom,0px)); width:104px; height:104px } .joy i{ width:42px; height:42px; margin:-21px }
+    .sources{ top:auto; bottom:calc(58px + env(safe-area-inset-bottom,0px)); max-height:60vh; overflow:auto; left:0; right:0; transform:none; max-width:none; border-radius:12px 12px 0 0 }
   }
   @media (prefers-reduced-motion:reduce){ * { transition:none!important } }
 </style>
@@ -74,6 +76,12 @@
   <div class="carte" id="cartebox" hidden><canvas id="carte" width="400" height="400" aria-label="Plan de l’étage, position en bleu"></canvas></div>
   <div class="soleil"><label>Soleil <input type="range" id="heure" min="5" max="22" step="0.25"><b id="heuretxt"></b></label></div>
   <div class="aide" id="aide" hidden>Glisse pour regarder · ZQSD ou flèches pour marcher · Maj pour courir · les étages = l’ascenseur</div>
+  <button class="pastille" id="pastille" aria-expanded="false">Immeuble entier</button>
+  <div class="feuille" id="feuille" role="dialog" aria-label="Réglages">
+    <h3>Affichage</h3><div class="grp"><button data-m="tourne">Rotation</button><button data-m="noms">Étiquettes</button><button data-m="vois">Quartier</button><button data-m="qual">Occlusion</button><button data-m="fond">Fond blanc</button><button data-m="src">Sources</button></div>
+    <h3>Aménagement</h3><div class="grp"><button data-m="am-vide">Vide</button><button data-m="am-bur">Bureaux</button></div>
+  </div>
+  <div class="barre"><button id="menubtn" aria-pressed="false" aria-controls="feuille">Menu</button><button id="visite2" aria-pressed="false">Visite</button><label class="sol">Soleil <input type="range" id="heure2" min="5" max="22" step="0.25"><b id="heuretxt2"></b></label></div>
   <div class="sources" id="sources" hidden><button id="srcx" aria-label="Fermer">×</button><h2>D’où vient la maquette</h2><ul>
     <li>Immeuble : plans Gexpertise (surfaces, cloisons, lots), relevé v1 ; façades en panneaux de pierre et bandeaux vitrés inclinés d’après les photos des annonces CBRE et Cushman &amp; Wakefield.</li>
     <li>Quartier : emprises, hauteurs et étages de 70 bâtiments voisins issus de l’IGN BD TOPO®, calés sur l’axe de la rue Jules Guesde (tronçons routiers IGN).</li>
@@ -98,12 +106,16 @@ import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 var ROOMS=__ROOMS__, FICHE=__FICHE__, Z=__Z__;
 var NIV=[['Tout',99],['7e',7],['6e',6],['5e',5],['4e',4],['3e',3],['2e',2],['1er',1],['RDC',0],['-1',-1],['-2',-2]];
 var el=document.getElementById('app'),charge=document.getElementById('charge'),chargetxt=document.getElementById('chargetxt'),calme=matchMedia('(prefers-reduced-motion: reduce)').matches,tactile=matchMedia('(pointer:coarse)').matches;
-var r=new THREE.WebGLRenderer({antialias:false,preserveDrawingBuffer:true,powerPreference:'high-performance'}); r.setPixelRatio(Math.min(devicePixelRatio,tactile?1.5:2)); r.outputColorSpace=THREE.SRGBColorSpace; r.toneMapping=THREE.ACESFilmicToneMapping; r.toneMappingExposure=.85; r.shadowMap.enabled=true; r.shadowMap.type=THREE.PCFSoftShadowMap; el.insertBefore(r.domElement,el.firstChild);
+var lite=tactile||innerWidth<700||innerHeight<500;   // téléphone / tablette : rendu direct, ombres et textures réduites, intérieurs à la demande
+function panne(t){charge.hidden=false;charge.firstChild.textContent='La 3D ne démarre pas sur cet appareil.';chargetxt.textContent=t}
+addEventListener('error',function(e){if(!window.__ok)panne(String(e.message||e.error||'erreur').slice(0,160))});
+var r=new THREE.WebGLRenderer({antialias:lite,preserveDrawingBuffer:!lite,powerPreference:'high-performance'}); r.setPixelRatio(Math.min(devicePixelRatio,lite?1.25:2));
+r.domElement.addEventListener('webglcontextlost',function(e){e.preventDefault();panne('Mémoire graphique insuffisante : ferme d’autres onglets et recharge.')}); r.outputColorSpace=THREE.SRGBColorSpace; r.toneMapping=THREE.ACESFilmicToneMapping; r.toneMappingExposure=.85; r.shadowMap.enabled=true; r.shadowMap.type=THREE.PCFSoftShadowMap; el.insertBefore(r.domElement,el.firstChild);
 var sc=new THREE.Scene(), cam=new THREE.PerspectiveCamera(30,1,.5,2500), ctl=new OrbitControls(cam,r.domElement);
 ctl.enableDamping=true; ctl.dampingFactor=.08; ctl.maxPolarAngle=Math.PI*.495; ctl.minDistance=6; ctl.maxDistance=520; ctl.enablePan=false; ctl.autoRotate=!calme; ctl.autoRotateSpeed=.4;
 /* Lumière : soleil réel + lumière de ciel (hémisphère) ; l'environnement PBR vient du ciel physique (PMREM). */
 var hemi=new THREE.HemisphereLight(0xdfe8f5,0x8a8478,.35); sc.add(hemi);
-var sun=new THREE.DirectionalLight(0xfff4e6,2.2); sun.position.set(-90,140,70); sun.castShadow=true; sun.shadow.mapSize.setScalar(tactile?2048:4096); var c_=sun.shadow.camera; c_.left=-75;c_.right=75;c_.top=75;c_.bottom=-75;c_.near=10;c_.far=500; sun.shadow.bias=-.00025; sun.shadow.normalBias=.04; sun.shadow.radius=2; sc.add(sun); sc.add(sun.target);
+var sun=new THREE.DirectionalLight(0xfff4e6,2.2); sun.position.set(-90,140,70); sun.castShadow=true; sun.shadow.mapSize.setScalar(lite?1024:4096); var c_=sun.shadow.camera; c_.left=-75;c_.right=75;c_.top=75;c_.bottom=-75;c_.near=10;c_.far=500; sun.shadow.bias=-.00025; sun.shadow.normalBias=.04; sun.shadow.radius=2; sc.add(sun); sc.add(sun.target);
 var sky=new Sky(); sky.scale.setScalar(3000); var SKYU=sky.material.uniforms; SKYU.turbidity.value=2.8; SKYU.rayleigh.value=1.6; SKYU.mieCoefficient.value=.006; SKYU.mieDirectionalG.value=.82; sc.add(sky);
 var pmrem=new THREE.PMREMGenerator(r), envScene=new THREE.Scene(), skyEnv=new Sky(); skyEnv.scale.setScalar(3000); envScene.add(skyEnv); var envRT=null;
 function environnement(){ var u=skyEnv.material.uniforms; ['turbidity','rayleigh','mieCoefficient','mieDirectionalG'].forEach(function(k){u[k].value=SKYU[k].value}); u.sunPosition.value.copy(SKYU.sunPosition.value);
@@ -111,7 +123,7 @@ function environnement(){ var u=skyEnv.material.uniforms; ['turbidity','rayleigh
 /* Post-traitement : rendu, occlusion ambiante (GTAO), sortie tone-mapping, anticrénelage SMAA. */
 var comp=new EffectComposer(r), rp=new RenderPass(sc,cam), gtao=new GTAOPass(sc,cam,1,1), outp=new OutputPass(), smaa=new SMAAPass(1,1);
 gtao.output=GTAOPass.OUTPUT.Default; gtao.updateGtaoMaterial({radius:1.6,distanceExponent:1,thickness:1,scale:1,samples:tactile?8:16,distanceFallOff:1,screenSpaceRadius:false}); gtao.updatePdMaterial({lumaPhi:10,depthPhi:2,normalPhi:3,radius:4,radiusExponent:1,rings:2,samples:tactile?8:16});
-comp.addPass(rp); comp.addPass(gtao); comp.addPass(outp); comp.addPass(smaa); var AO=!tactile; gtao.enabled=AO;
+var AO=!lite; if(!lite){comp.addPass(rp); comp.addPass(gtao); comp.addPass(outp); comp.addPass(smaa)} gtao.enabled=AO;
 var sol=new THREE.Mesh(new THREE.CircleGeometry(900,64),new THREE.ShadowMaterial({opacity:.18})); sol.rotation.x=-Math.PI/2; sol.position.y=-.2; sol.receiveShadow=true; sc.add(sol);
 var obj=[],cur=99,anim=null,labels=[],voirNoms=false,vois=true,mats={};
 function pose(p,q,dur){var a=cam.position.clone(),b=ctl.target.clone(),t0=performance.now(),d=calme?1:(dur||1000);anim=function(n){var t=Math.min((n-t0)/d,1),e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;cam.position.lerpVectors(a,p,e);ctl.target.lerpVectors(b,q,e);if(t>=1)anim=null}}
@@ -131,13 +143,13 @@ function apply(){obj.forEach(function(o){var k=o.userData.k,pl=o.userData.pl,v;
     if(o.userData.fp){o.visible=marche;o.userData.up=0;return} if(marche&&o.userData.porte){o.visible=false;o.userData.up=0;return}
     if(o.userData.mob&&!bur){o.visible=false;o.userData.up=0;return}
     if(o.userData.clo&&bur){o.visible=false;o.userData.up=0;return}
-    if(k==='V'){o.visible=vois&&(cur===99||marche);return}
+    if(k==='V'){o.visible=vois&&(cur===99||marche)&&!(lite&&o.userData.loin);return}
     if(k==='R'){o.visible=cur>=0||cur===99;o.userData.up=0;return}
     if(marche){o.userData.up=0;o.visible=k==='V'||k==='R'||k>=0;return}
     if(cur===99)v=k>=0; else if(cur<0)v=(k<0&&k<=cur); else v=(k>=0&&k<=cur&&!(pl&&k===cur));
     o.userData.up=(cur!==99&&k!=='V'&&((cur>=0&&k>cur)||(cur<0&&k>=0)))?1:0; if(v||o.userData.up)o.visible=true; if(!v&&!o.userData.up)o.visible=false});
   sol.visible=cur>=0||cur===99; sky.visible=cur>=0||cur===99; vie.visible=sol.visible}
-function niveau(k){if(marche){if(k>=0&&k<=7)aller(k);return}cur=k;apply();[].forEach.call(document.querySelectorAll('#niveaux button'),function(b){b.setAttribute('aria-pressed',b.dataset.k==k)});fiche();noms();
+function niveau(k){if(k!==99&&!intOK)interieurs(function(){apply()});if(marche){if(k>=0&&k<=7)aller(k);return}cur=k;apply();pastille();[].forEach.call(document.querySelectorAll('#niveaux button'),function(b){b.setAttribute('aria-pressed',b.dataset.k==k)});fiche();noms();
   if(k===99)pose(new THREE.Vector3(-120,70,108),new THREE.Vector3(0,10,0));else{ctl.autoRotate=false;document.getElementById('tourne').setAttribute('aria-pressed',false);var h=Z[k];pose(new THREE.Vector3(-58,h+70,62),new THREE.Vector3(0,h,0))}}
 NIV.forEach(function(n){var b=document.createElement('button');b.textContent=n[0];b.dataset.k=n[1];b.id='n'+String(n[1]).replace('-','m');b.addEventListener('click',function(){niveau(n[1])});document.getElementById('niveaux').appendChild(b)});
 function am(b){bur=b;document.getElementById('am-vide').setAttribute('aria-pressed',!b);document.getElementById('am-bur').setAttribute('aria-pressed',b);apply();if(b&&cur===99)niveau(3)}
@@ -149,14 +161,14 @@ document.getElementById('qual').addEventListener('click',function(){AO=!AO;gtao.
 document.getElementById('src').addEventListener('click',function(){var s=document.getElementById('sources');s.hidden=!s.hidden;this.setAttribute('aria-pressed',!s.hidden)});document.getElementById('srcx').addEventListener('click',function(){document.getElementById('sources').hidden=true;document.getElementById('src').setAttribute('aria-pressed',false)});
 /* Matières : textures PBR cuites dans Blender (UV en mètres déjà dans le modèle), verre physique, teintes d'origine conservées. */
 var TL=new THREE.TextureLoader(),TEXC={};
-function tex(n,srgb){var k=n+(srgb?'s':'');if(TEXC[k])return TEXC[k];var t=TL.load('tex/'+n+'.jpg');t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=Math.min(8,r.capabilities.getMaxAnisotropy());if(srgb)t.colorSpace=THREE.SRGBColorSpace;TEXC[k]=t;return t}
+function tex(n,srgb){var k=n+(srgb?'s':'');if(TEXC[k])return TEXC[k];var t=TL.load((lite?'tex512/':'tex/')+n+'.jpg');t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=Math.min(lite?2:8,r.capabilities.getMaxAnisotropy());if(srgb)t.colorSpace=THREE.SRGBColorSpace;TEXC[k]=t;return t}
 var PBR={'Pierre de taille':['pierre',0xE2D8C4,.78],'Corniche':['pierre',0xDDD3BE,.75],'Corniche.001':['pierre',0xD6CDB9,.75],'Trottoir':['trottoir',0xB9B6AE,.95],'Sol cour':['trottoir',0xC9C3B6,.95],'Pavage cour':['trottoir',0xD4C7B0,.95],'Sol terrasse.001':['trottoir',0xB5AFA3,.95],'Bordures':['trottoir',0xC2BDB3,.9],
   'Chaussee':['chaussee',0x9A9A9C,.95],'Chaussee.001':['chaussee',0x9A9A9C,.95],'Enduit courette':['enduit',0xCFCCC5,.9],'Moquette escalier.001':['moquette',0xB8BCC6,.98],'Faux plafond':['faux_plafond',0xF2F1EC,.85],'Joints zinc':['zinc',0xAAB0B8,.5],'Terre':['gravier',0x8B7A66,.95]};
 var VITRE=new THREE.MeshPhysicalMaterial({color:0x33434C,metalness:.05,roughness:.06,clearcoat:1,clearcoatRoughness:.05,envMapIntensity:1.4,emissive:0x000000}),VITREV=new THREE.MeshPhysicalMaterial({color:0x101E26,metalness:.1,roughness:.04,clearcoat:1,envMapIntensity:1.2,transparent:true,opacity:.45,depthWrite:false});
 function matiere(o){var m=o.material,n=m.name||'';if(!mats[n]){m.userData.o={c:m.color.clone(),r:m.roughness,me:m.metalness};mats[n]=m}
   if(n==='Vitre'||n==='Vitre voiture'){o.material=VITRE;o.castShadow=false;return} if(/^Verre/.test(n)){m.transparent=true;m.opacity=.35;m.roughness=.05;m.metalness=0;m.depthWrite=false;m.envMapIntensity=1.2;o.castShadow=false;return}
   var base=n.replace(/\.\d+$/,''),P=PBR[n]||PBR[base]||(/^BB_render/.test(n)?['enduit',0xD9D2C4,.9]:/^BB_(limestone|brick)/.test(n)?['pierre',/brick/.test(n)?0x7A5A4E:0xD9CFBA,.8]:null);
-  if(n==='Orthophoto'){var pa=o.geometry.attributes.position,cx=0,cy=0,cz=0;for(var i=0;i<pa.count;i++){cx+=pa.getX(i);cy+=pa.getY(i);cz+=pa.getZ(i)}cx/=pa.count;cy/=pa.count;cz/=pa.count;for(var i2=0;i2<pa.count;i2++){pa.setXYZ(i2,cx+(pa.getX(i2)-cx)*2,cy+(pa.getY(i2)-cy)*2-.05,cz+(pa.getZ(i2)-cz)*2)}pa.needsUpdate=true;o.geometry.computeBoundingSphere();m.map=TL.load('ortho.jpg');m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=8;m.color.set(0xBFBFBF);m.roughness=1;m.needsUpdate=true;o.receiveShadow=true;return}
+  if(n==='Orthophoto'){var pa=o.geometry.attributes.position,cx=0,cy=0,cz=0;for(var i=0;i<pa.count;i++){cx+=pa.getX(i);cy+=pa.getY(i);cz+=pa.getZ(i)}cx/=pa.count;cy/=pa.count;cz/=pa.count;for(var i2=0;i2<pa.count;i2++){pa.setXYZ(i2,cx+(pa.getX(i2)-cx)*2,cy+(pa.getY(i2)-cy)*2-.05,cz+(pa.getZ(i2)-cz)*2)}pa.needsUpdate=true;o.geometry.computeBoundingSphere();m.map=TL.load(lite?'ortho_1024.jpg':'ortho.jpg');m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=lite?2:8;m.color.set(0xBFBFBF);m.roughness=1;m.needsUpdate=true;o.receiveShadow=true;return}
   if(P&&!m.userData.pbr){m.userData.pbr=1;m.map=tex(P[0]+'_albedo',true);m.normalMap=tex(P[0]+'_normal');m.normalScale.set(.7,.7);m.roughnessMap=tex(P[0]+'_rough');m.roughness=P[2];m.color.set(P[1]);m.metalness=n==='Joints zinc'?.5:0;m.needsUpdate=true}
   if(n==='BB_zinc'){m.map=tex('zinc_albedo',true);m.normalMap=tex('zinc_normal');m.normalScale.set(.5,.5);m.color.set(0x8A9099);m.metalness=.25;m.roughness=.55;m.needsUpdate=true} if(/^Carrosserie/.test(n)){m.metalness=.6;m.roughness=.3;m.envMapIntensity=1.3;m.clearcoat=1} if(n==='Lampadaire'||n==='Potelet'){m.roughness=.45;m.metalness=.6}
   if(n==='Ecran allume'){m.emissive.set(0x7F98B0);m.emissiveIntensity=0} m.envMapIntensity=m.envMapIntensity||.9}
@@ -266,9 +278,9 @@ function soleil(){var h=+heure.value,d=new Date(),j=Math.floor((d-new Date(d.get
   nuit=alt<0;r.toneMappingExposure=nuit?.9:(.72+.25*w);
   var ea=mats['Ecran allume'];if(ea){ea.emissiveIntensity=marche?.7:0}
   VITRE.emissive.set(0xE8B86A);VITRE.emissiveIntensity=nuit?1.1:0;var lp=mats['Lampadaire'];if(lp){lp.emissive.set(0xFFE0A0);lp.emissiveIntensity=nuit?2.5:0}
-  document.getElementById('heuretxt').textContent=Math.floor(h)+' h'+(h%1?String(Math.round(h%1*60)).padStart(2,'0'):'');
+  var ht=Math.floor(h)+' h'+(h%1?String(Math.round(h%1*60)).padStart(2,'0'):'');document.getElementById('heuretxt').textContent=ht;document.getElementById('heuretxt2').textContent=ht;
   clearTimeout(envTimer);envTimer=setTimeout(environnement,120)}
-heure.addEventListener('input',soleil);
+heure.addEventListener('input',function(){heure2.value=heure.value;soleil()});
 var PALV={'Moquette escalier':0x55637A,'Plateau bureau':0xB8905F,'Siege':0x213F38,'Canape':0xA8543C,'Coussin bleu':0xD9BC8C,'Tapis bureau':0xB8894C,'Cuisine':0x6B8070,'Plan de travail':0xB88F60,'Bois mobilier':0x734D2E,'Cabine':0x29504A,'Pot':0xC79E80,'Feuillage':0x3F6B30,'Abat':0x1E1E20,'Tabouret':0x1E1E20,'Pied bureau':0x1A1A1C,'Ecran allume':0x9FB8D0,'Ecran':0x0A0A0C};
 var DEPART={6:[-13.2,-3.6,Math.PI]};
 function aller(k){var Lv=VIS&&VIS[k],d=DEPART[k];if(!d){var p=Lv&&Lv.paliers.length?Lv.paliers.slice().sort(function(a,b){return a[0]-b[0]})[0]:[-13,-1.3];d=[p[0],p[1],Math.PI]}
@@ -284,8 +296,16 @@ function visite(on){marche=on;document.getElementById('app').classList.toggle('v
   if(on){bur=true;document.getElementById('am-vide').setAttribute('aria-pressed',false);document.getElementById('am-bur').setAttribute('aria-pressed',true);Object.keys(PALV).forEach(function(k){var m=mats[k];if(m)m.color.set(PALV[k])})}
   else{Object.keys(mats).forEach(function(k){var m=mats[k],o=m.userData.o;if(o&&!m.userData.pbr&&!/^Vitre|^Verre/.test(k))m.color.copy(o.c)})}
   obj.forEach(function(o){if(o.userData.vitre)o.material=on?VITREV:VITRE});
-  if(on){aller(cur>=0&&cur<=7?cur:6);placer()}else{cur=99;niveau(99)}soleil();apply();fiche()}
-document.getElementById('visite').addEventListener('click',function(){visite(!marche)});
+  if(on){aller(cur>=0&&cur<=7?cur:6);placer()}else{cur=99;niveau(99)}soleil();apply();fiche();synchro()}
+document.getElementById('visite').addEventListener('click',function(){if(!marche&&!intOK){interieurs(function(){visite(true)});return}visite(!marche)});
+/* Commandes téléphone : barre, feuille de réglages, pastille de fiche. Elles pilotent les mêmes boutons que le bureau. */
+function pastille(){var p=document.getElementById('pastille'),n=NIV.filter(function(a){return a[1]===cur})[0];p.textContent=cur===99?'Immeuble entier · fiche':(cur===0?'RDC':cur<0?'Sous-sol '+(-cur):n[0]+' étage')+(FICHE[cur]&&FICHE[cur].tot?' · '+f1(FICHE[cur].tot)+' m²':'')+' · fiche'}
+document.getElementById('pastille').addEventListener('click',function(){var f=document.getElementById('fiche');f.classList.toggle('ouverte');this.setAttribute('aria-expanded',f.classList.contains('ouverte'))});
+document.getElementById('menubtn').addEventListener('click',function(){var f=document.getElementById('feuille');f.classList.toggle('ouverte');this.setAttribute('aria-pressed',f.classList.contains('ouverte'));synchro()});
+document.getElementById('visite2').addEventListener('click',function(){document.getElementById('visite').click();synchro()});
+[].forEach.call(document.querySelectorAll('#feuille button'),function(b){b.addEventListener('click',function(){var t=document.getElementById(b.dataset.m);if(t)t.click();synchro()})});
+function synchro(){[].forEach.call(document.querySelectorAll('#feuille button'),function(b){var t=document.getElementById(b.dataset.m);if(!t)return;var p=t.getAttribute('aria-pressed');if(p!==null)b.setAttribute('aria-pressed',p);if(b.dataset.m==='fond')b.textContent=t.textContent});document.getElementById('visite2').setAttribute('aria-pressed',marche)}
+var heure2=document.getElementById('heure2');heure2.value=14;heure2.addEventListener('input',function(){heure.value=heure2.value;soleil()});
 addEventListener('keydown',function(e){if(!marche)return;touches[e.code]=1;if(/Arrow/.test(e.code))e.preventDefault()});addEventListener('keyup',function(e){touches[e.code]=0});addEventListener('blur',function(){touches={}});
 r.domElement.addEventListener('pointerdown',function(e){if(marche)glisse={x:e.clientX,y:e.clientY,id:e.pointerId}});
 addEventListener('pointermove',function(e){if(!marche||!glisse||e.pointerId!==glisse.id)return;yaw-=(e.clientX-glisse.x)*.0045;pitch=Math.max(-1.2,Math.min(1.2,pitch-(e.clientY-glisse.y)*.0045));glisse.x=e.clientX;glisse.y=e.clientY});
@@ -294,20 +314,22 @@ addEventListener('pointerup',function(e){if(glisse&&e.pointerId===glisse.id)glis
   J.addEventListener('pointerdown',function(e){id=e.pointerId;J.setPointerCapture(id);mv(e);e.stopPropagation()});J.addEventListener('pointermove',function(e){if(e.pointerId===id)mv(e)});
   J.addEventListener('pointerup',function(e){if(e.pointerId!==id)return;id=null;joy=null;K.style.transform=''});J.addEventListener('pointercancel',function(){id=null;joy=null;K.style.transform=''})})();
 window.__pos=pos;window.__dbg={sun:sun,hemi:hemi,sc:sc,cam:cam,r:r,mats:mats};
-window.__pose=function(k,x,y,yw,pt){if(!marche)visite(true);pos.k=k;cur=k;pos.x=x;pos.y=y;yaw=yw;pitch=pt||0;placer()};
-function size(){var w=el.clientWidth,h=el.clientHeight;r.setSize(w,h,false);comp.setSize(w,h);gtao.setSize(w,h);smaa.setSize(w,h);cam.aspect=w/h;cam.fov=marche?(w<h?72:62):(w<h?46:30);cam.updateProjectionMatrix()}
-addEventListener('resize',size);size();cam.position.set(-120,70,108);ctl.target.set(0,10,0);ctl.update();fiche();soleil();environnement();
+window.__pose=function(k,x,y,yw,pt){if(!marche)visite(true);pos.k=k;cur=k;pos.x=x;pos.y=y;yaw=yw;pitch=pt||0;[].forEach.call(document.querySelectorAll('#niveaux button'),function(b){b.setAttribute('aria-pressed',b.dataset.k==k)});placer()};
+function size(){var w=el.clientWidth,h=el.clientHeight;r.setSize(w,h,false);comp.setSize(w,h);gtao.setSize(w,h);smaa.setSize(w,h);cam.aspect=w/h;cam.fov=marche?(w<h?72:62):(w<h?52:30);cam.updateProjectionMatrix()}
+addEventListener('resize',size);size();cam.position.set(lite?-150:-120,lite?95:70,lite?135:108);ctl.target.set(0,10,0);ctl.update();fiche();pastille();soleil();environnement();synchro();
 [].forEach.call(document.querySelectorAll('#niveaux button'),function(b){b.setAttribute('aria-pressed',b.dataset.k==99)});
-var draco=new DRACOLoader().setDecoderPath('draco/'),loader=new GLTFLoader().setDRACOLoader(draco);
+var draco=new DRACOLoader().setDecoderPath('draco/'),loader=new GLTFLoader().setDRACOLoader(draco),intOK=false,intEnCours=false;
+function interieurs(cb){if(intOK){if(cb)cb();return}if(intEnCours)return;intEnCours=true;loader.load('le123_int.gltf.json',function(g2){integrer(g2);intOK=true;window.__ok=obj.length;if(cb)cb()},undefined,function(){intEnCours=false})}
 function integrer(g){g.scene.traverse(function(o){if(!o.isMesh)return;var nm=o.name||(o.parent&&o.parent.name)||'',k=niv(nm);if(k===null)k=niv(o.parent&&o.parent.name||'');if(k===null)return;
     o.userData.k=k;o.userData.pl=/plafond/.test(nm)||/plafond/.test(o.parent&&o.parent.name||'');o.userData.mob=/_mob/.test(nm)||/_mob/.test(o.parent&&o.parent.name||'');o.userData.fp=/_fp/.test(nm);o.userData.porte=/_porte/.test(nm);o.userData.clo=/_clo/.test(nm)||/_clo/.test(o.parent&&o.parent.name||'');o.userData.up=0;o.userData.vitre=(o.material.name==='Vitre');obj.push(o);
-    o.castShadow=k!=='V'||true;o.receiveShadow=true;o.material.side=THREE.DoubleSide;matiere(o);if(o.userData.vitre)o.castShadow=false});
+    if(k==='V'){o.geometry.computeBoundingSphere();var cS=o.geometry.boundingSphere.center;o.userData.loin=Math.hypot(cS.x,cS.z)>95}
+    o.castShadow=!(lite&&k==='V');o.receiveShadow=true;o.material.side=THREE.DoubleSide;matiere(o);if(o.userData.vitre)o.castShadow=false});
   sc.add(g.scene);apply();soleil()}
 loader.load('le123_ext.gltf.json',function(g){integrer(g);charge.hidden=true;var h=location.hash.slice(1);if(h){var b=document.getElementById(h);if(b)b.click()}
-  chargetxt.textContent='intérieurs…';loader.load('le123_int.gltf.json',function(g2){integrer(g2);window.__ok=obj.length},undefined,function(){});
+  window.__ok=obj.length;if(!lite)interieurs();
 },function(ev){if(ev.total)chargetxt.textContent=Math.round(100*ev.loaded/ev.total)+' % du quartier'},function(){charge.textContent="La maquette ne s'est pas chargée. Recharge la page."});
 var tp=0;
 (function loop(n){requestAnimationFrame(loop);n=n||0;if(anim)anim(n);boussole();var dt_=Math.min(.05,(n-(tp||n))/1000);tp=n;if(ANI&&sol.visible){VT.value+=dt_;trafic(dt_)}
   obj.forEach(function(o){var b=o.userData.y0;if(b===undefined)b=o.userData.y0=o.position.y;var t=b+(o.userData.up?80:0);if(Math.abs(o.position.y-t)>.05){o.position.y+=(t-o.position.y)*(calme?1:.12);if(o.userData.up&&o.position.y-b>75)o.visible=false}else o.position.y=t});
-  if(marche){avance(dt_);carteDessine()}else ctl.update();comp.render()})();
+  if(marche){avance(dt_);carteDessine()}else ctl.update();if(lite)r.render(sc,cam);else comp.render()})();
 </script>

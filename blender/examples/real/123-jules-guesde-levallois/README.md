@@ -20,6 +20,16 @@ https://claude.ai/artifact/3vrR6FwECg5J39LXnu6vGB).
 | Chargement | un glTF meshopt de 4,5 Mo | deux glTF Draco (extérieur 3,4 Mo puis intérieurs 2,1 Mo en différé) |
 | Conservé | niveaux, lots Gexpertise, étiquettes, aménagement bureaux, visite à pied avec plan, trafic, arbres, boussole | idem, plus bouton Sources et bouton Occlusion |
 
+## Téléphone
+
+Sous 700 px de large, la page passe en mode léger : rendu direct sans post-traitement, ombres 1024, textures 512 px, orthophoto 1024,
+voisins au-delà de 95 m masqués, intérieurs chargés seulement quand on choisit un niveau ou la visite, message explicite si WebGL
+échoue. L'interface se réduit à une barre (Menu, Visite, Soleil), un bandeau de niveaux défilant et une pastille qui déplie la fiche.
+
+| Ensemble | Menu | Niveau et fiche | Visite |
+|---|---|---|---|
+| ![](captures/mobile_ensemble.png) | ![](captures/mobile_menu.png) | ![](captures/mobile_niveau.png) | ![](captures/mobile_visite.png) |
+
 ## Sources
 
 - Immeuble : géométrie de la v1 (plans Gexpertise), photos des annonces CBRE et Cushman & Wakefield (`captures/photos_annonces.jpg`) pour les matériaux : panneaux de pierre beige, bandeaux vitrés inclinés à menuiserie noire, colonne en béton lavé, auvent perforé, square arboré en face.
