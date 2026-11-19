@@ -123,7 +123,7 @@ function environnement(){ var u=skyEnv.material.uniforms; ['turbidity','rayleigh
 /* Post-traitement : rendu, occlusion ambiante (GTAO), sortie tone-mapping, anticrénelage SMAA. */
 var comp=new EffectComposer(r), rp=new RenderPass(sc,cam), gtao=new GTAOPass(sc,cam,1,1), outp=new OutputPass(), smaa=new SMAAPass(1,1);
 gtao.output=GTAOPass.OUTPUT.Default; gtao.updateGtaoMaterial({radius:1.6,distanceExponent:1,thickness:1,scale:1,samples:tactile?8:16,distanceFallOff:1,screenSpaceRadius:false}); gtao.updatePdMaterial({lumaPhi:10,depthPhi:2,normalPhi:3,radius:4,radiusExponent:1,rings:2,samples:tactile?8:16});
-var AO=!lite; if(!lite){comp.addPass(rp); comp.addPass(gtao); comp.addPass(outp); comp.addPass(smaa)} gtao.enabled=AO;
+var direct=lite,tDiag=0,diagFait=false; var AO=!lite; if(!lite){comp.addPass(rp); comp.addPass(gtao); comp.addPass(outp); comp.addPass(smaa)} gtao.enabled=AO;
 var sol=new THREE.Mesh(new THREE.CircleGeometry(900,64),new THREE.ShadowMaterial({opacity:.18})); sol.rotation.x=-Math.PI/2; sol.position.y=-.2; sol.receiveShadow=true; sc.add(sol);
 var obj=[],cur=99,anim=null,labels=[],voirNoms=false,vois=true,mats={};
 function pose(p,q,dur){var a=cam.position.clone(),b=ctl.target.clone(),t0=performance.now(),d=calme?1:(dur||1000);anim=function(n){var t=Math.min((n-t0)/d,1),e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;cam.position.lerpVectors(a,p,e);ctl.target.lerpVectors(b,q,e);if(t>=1)anim=null}}
@@ -150,22 +150,24 @@ function apply(){obj.forEach(function(o){var k=o.userData.k,pl=o.userData.pl,v;
     o.userData.up=(cur!==99&&k!=='V'&&((cur>=0&&k>cur)||(cur<0&&k>=0)))?1:0; if(v||o.userData.up)o.visible=true; if(!v&&!o.userData.up)o.visible=false});
   sol.visible=cur>=0||cur===99; sky.visible=cur>=0||cur===99; vie.visible=sol.visible}
 function niveau(k){if(k!==99&&!intOK)interieurs(function(){apply()});if(marche){if(k>=0&&k<=7)aller(k);return}cur=k;apply();pastille();[].forEach.call(document.querySelectorAll('#niveaux button'),function(b){b.setAttribute('aria-pressed',b.dataset.k==k)});fiche();noms();
-  if(k===99)pose(new THREE.Vector3(-120,70,108),new THREE.Vector3(0,10,0));else{ctl.autoRotate=false;document.getElementById('tourne').setAttribute('aria-pressed',false);var h=Z[k];pose(new THREE.Vector3(-58,h+70,62),new THREE.Vector3(0,h,0))}}
+  if(k===99)pose(new THREE.Vector3(-88,52,80),new THREE.Vector3(0,9,0));else{ctl.autoRotate=false;document.getElementById('tourne').setAttribute('aria-pressed',false);var h=Z[k];pose(new THREE.Vector3(-58,h+70,62),new THREE.Vector3(0,h,0))}}
 NIV.forEach(function(n){var b=document.createElement('button');b.textContent=n[0];b.dataset.k=n[1];b.id='n'+String(n[1]).replace('-','m');b.addEventListener('click',function(){niveau(n[1])});document.getElementById('niveaux').appendChild(b)});
 function am(b){bur=b;document.getElementById('am-vide').setAttribute('aria-pressed',!b);document.getElementById('am-bur').setAttribute('aria-pressed',b);apply();if(b&&cur===99)niveau(3)}
 document.getElementById('am-vide').addEventListener('click',function(){am(false)});document.getElementById('am-bur').addEventListener('click',function(){am(true)});
 document.getElementById('tourne').addEventListener('click',function(){ctl.autoRotate=!ctl.autoRotate;this.setAttribute('aria-pressed',ctl.autoRotate)});
 document.getElementById('noms').addEventListener('click',function(){voirNoms=!voirNoms;this.setAttribute('aria-pressed',voirNoms);noms()});
 document.getElementById('vois').addEventListener('click',function(){vois=!vois;this.setAttribute('aria-pressed',vois);apply()});
-document.getElementById('qual').addEventListener('click',function(){AO=!AO;gtao.enabled=AO;this.setAttribute('aria-pressed',AO)});
+document.getElementById('qual').addEventListener('click',function(){AO=!AO;gtao.enabled=AO;if(AO&&!lite)direct=false;this.setAttribute('aria-pressed',AO)});
 document.getElementById('src').addEventListener('click',function(){var s=document.getElementById('sources');s.hidden=!s.hidden;this.setAttribute('aria-pressed',!s.hidden)});document.getElementById('srcx').addEventListener('click',function(){document.getElementById('sources').hidden=true;document.getElementById('src').setAttribute('aria-pressed',false)});
 /* Matières : textures PBR cuites dans Blender (UV en mètres déjà dans le modèle), verre physique, teintes d'origine conservées. */
 var TL=new THREE.TextureLoader(),TEXC={};
 function tex(n,srgb){var k=n+(srgb?'s':'');if(TEXC[k])return TEXC[k];var t=TL.load((lite?'tex512/':'tex/')+n+'.jpg');t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=Math.min(lite?2:8,r.capabilities.getMaxAnisotropy());if(srgb)t.colorSpace=THREE.SRGBColorSpace;TEXC[k]=t;return t}
 var PBR={'Pierre de taille':['pierre',0xE2D8C4,.78],'Corniche':['pierre',0xDDD3BE,.75],'Corniche.001':['pierre',0xD6CDB9,.75],'Trottoir':['trottoir',0xB9B6AE,.95],'Sol cour':['trottoir',0xC9C3B6,.95],'Pavage cour':['trottoir',0xD4C7B0,.95],'Sol terrasse.001':['trottoir',0xB5AFA3,.95],'Bordures':['trottoir',0xC2BDB3,.9],
   'Chaussee':['chaussee',0x9A9A9C,.95],'Chaussee.001':['chaussee',0x9A9A9C,.95],'Enduit courette':['enduit',0xCFCCC5,.9],'Moquette escalier.001':['moquette',0xB8BCC6,.98],'Faux plafond':['faux_plafond',0xF2F1EC,.85],'Joints zinc':['zinc',0xAAB0B8,.5],'Terre':['gravier',0x8B7A66,.95]};
+var VOISIN=new THREE.MeshStandardMaterial({color:0xE6E2D9,roughness:.92,metalness:0,envMapIntensity:.6}),VOISINV=new THREE.MeshStandardMaterial({color:0x9DAAB3,roughness:.3,metalness:.1,envMapIntensity:.9}),VOISINT=new THREE.MeshStandardMaterial({color:0xC9CCD1,roughness:.8,metalness:0});
 var VITRE=new THREE.MeshPhysicalMaterial({color:0x33434C,metalness:.05,roughness:.06,clearcoat:1,clearcoatRoughness:.05,envMapIntensity:1.4,emissive:0x000000}),VITREV=new THREE.MeshPhysicalMaterial({color:0x101E26,metalness:.1,roughness:.04,clearcoat:1,envMapIntensity:1.2,transparent:true,opacity:.45,depthWrite:false});
-function matiere(o){var m=o.material,n=m.name||'';if(!mats[n]){m.userData.o={c:m.color.clone(),r:m.roughness,me:m.metalness};mats[n]=m}
+function matiere(o){var m=o.material,n=m.name||'';
+  if(o.userData.k==='V'){o.material=/glass/.test(n)?VOISINV:/zinc/.test(n)?VOISINT:VOISIN;return}if(!mats[n]){m.userData.o={c:m.color.clone(),r:m.roughness,me:m.metalness};mats[n]=m}
   if(n==='Vitre'||n==='Vitre voiture'){o.material=VITRE;o.castShadow=false;return} if(/^Verre/.test(n)){m.transparent=true;m.opacity=.35;m.roughness=.05;m.metalness=0;m.depthWrite=false;m.envMapIntensity=1.2;o.castShadow=false;return}
   var base=n.replace(/\.\d+$/,''),P=PBR[n]||PBR[base]||(/^BB_render/.test(n)?['enduit',0xD9D2C4,.9]:/^BB_(limestone|brick)/.test(n)?['pierre',/brick/.test(n)?0x7A5A4E:0xD9CFBA,.8]:null);
   if(n==='Orthophoto'){var pa=o.geometry.attributes.position,cx=0,cy=0,cz=0;for(var i=0;i<pa.count;i++){cx+=pa.getX(i);cy+=pa.getY(i);cz+=pa.getZ(i)}cx/=pa.count;cy/=pa.count;cz/=pa.count;for(var i2=0;i2<pa.count;i2++){pa.setXYZ(i2,cx+(pa.getX(i2)-cx)*2,cy+(pa.getY(i2)-cy)*2-.05,cz+(pa.getZ(i2)-cz)*2)}pa.needsUpdate=true;o.geometry.computeBoundingSphere();m.map=TL.load(lite?'ortho_1024.jpg':'ortho.jpg');m.map.colorSpace=THREE.SRGBColorSpace;m.map.anisotropy=lite?2:8;m.color.set(0xBFBFBF);m.roughness=1;m.needsUpdate=true;o.receiveShadow=true;return}
@@ -316,9 +318,9 @@ addEventListener('pointerup',function(e){if(glisse&&e.pointerId===glisse.id)glis
 window.__pos=pos;window.__dbg={sun:sun,hemi:hemi,sc:sc,cam:cam,r:r,mats:mats};
 window.__pose=function(k,x,y,yw,pt){if(!marche)visite(true);pos.k=k;cur=k;pos.x=x;pos.y=y;yaw=yw;pitch=pt||0;[].forEach.call(document.querySelectorAll('#niveaux button'),function(b){b.setAttribute('aria-pressed',b.dataset.k==k)});placer()};
 function size(){var w=el.clientWidth,h=el.clientHeight;r.setSize(w,h,false);comp.setSize(w,h);gtao.setSize(w,h);smaa.setSize(w,h);cam.aspect=w/h;cam.fov=marche?(w<h?72:62):(w<h?52:30);cam.updateProjectionMatrix()}
-addEventListener('resize',size);size();cam.position.set(lite?-150:-120,lite?95:70,lite?135:108);ctl.target.set(0,10,0);ctl.update();fiche();pastille();soleil();environnement();synchro();
+addEventListener('resize',size);size();cam.position.set(lite?-105:-88,lite?66:52,lite?96:80);ctl.target.set(0,9,0);ctl.update();fiche();pastille();soleil();environnement();synchro();
 [].forEach.call(document.querySelectorAll('#niveaux button'),function(b){b.setAttribute('aria-pressed',b.dataset.k==99)});
-var draco=new DRACOLoader().setDecoderPath('draco/'),loader=new GLTFLoader().setDRACOLoader(draco),intOK=false,intEnCours=false;
+var draco=new DRACOLoader().setDecoderPath('draco/').setDecoderConfig({type:'js'}),loader=new GLTFLoader().setDRACOLoader(draco),intOK=false,intEnCours=false;
 function interieurs(cb){if(intOK){if(cb)cb();return}if(intEnCours)return;intEnCours=true;loader.load('le123_int.gltf.json',function(g2){integrer(g2);intOK=true;window.__ok=obj.length;if(cb)cb()},undefined,function(){intEnCours=false})}
 function integrer(g){g.scene.traverse(function(o){if(!o.isMesh)return;var nm=o.name||(o.parent&&o.parent.name)||'',k=niv(nm);if(k===null)k=niv(o.parent&&o.parent.name||'');if(k===null)return;
     o.userData.k=k;o.userData.pl=/plafond/.test(nm)||/plafond/.test(o.parent&&o.parent.name||'');o.userData.mob=/_mob/.test(nm)||/_mob/.test(o.parent&&o.parent.name||'');o.userData.fp=/_fp/.test(nm);o.userData.porte=/_porte/.test(nm);o.userData.clo=/_clo/.test(nm)||/_clo/.test(o.parent&&o.parent.name||'');o.userData.up=0;o.userData.vitre=(o.material.name==='Vitre');obj.push(o);
@@ -327,9 +329,10 @@ function integrer(g){g.scene.traverse(function(o){if(!o.isMesh)return;var nm=o.n
   sc.add(g.scene);apply();soleil()}
 loader.load('le123_ext.gltf.json',function(g){integrer(g);charge.hidden=true;var h=location.hash.slice(1);if(h){var b=document.getElementById(h);if(b)b.click()}
   window.__ok=obj.length;if(!lite)interieurs();
-},function(ev){if(ev.total)chargetxt.textContent=Math.round(100*ev.loaded/ev.total)+' % du quartier'},function(){charge.textContent="La maquette ne s'est pas chargée. Recharge la page."});
+},function(ev){chargetxt.textContent=ev.total?Math.round(100*ev.loaded/ev.total)+' % du quartier':Math.round(ev.loaded/1048576)+' Mo reçus'},function(e){panne('Le fichier de la maquette ne se charge pas : '+String(e&&e.message||e).slice(0,120))});
 var tp=0;
 (function loop(n){requestAnimationFrame(loop);n=n||0;if(anim)anim(n);boussole();var dt_=Math.min(.05,(n-(tp||n))/1000);tp=n;if(ANI&&sol.visible){VT.value+=dt_;trafic(dt_)}
   obj.forEach(function(o){var b=o.userData.y0;if(b===undefined)b=o.userData.y0=o.position.y;var t=b+(o.userData.up?80:0);if(Math.abs(o.position.y-t)>.05){o.position.y+=(t-o.position.y)*(calme?1:.12);if(o.userData.up&&o.position.y-b>75)o.visible=false}else o.position.y=t});
-  if(marche){avance(dt_);carteDessine()}else ctl.update();if(lite)r.render(sc,cam);else comp.render()})();
+  if(marche){avance(dt_);carteDessine()}else ctl.update();if(direct)r.render(sc,cam);else{try{comp.render()}catch(e){direct=true;AO=false;gtao.enabled=false;console.warn('post-traitement désactivé',e);r.render(sc,cam)}}
+  if(!window.__ok||diagFait)return;if(!tDiag)tDiag=n;if(n-tDiag>9000){diagFait=true;if(r.info.render.triangles<1000){panne('Le navigateur ne dessine rien ('+r.info.render.triangles+' triangles). Essaie un autre navigateur ou active l’accélération matérielle.')}}})();
 </script>
