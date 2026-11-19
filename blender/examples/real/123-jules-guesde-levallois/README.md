@@ -20,6 +20,18 @@ https://claude.ai/artifact/3vrR6FwECg5J39LXnu6vGB).
 | Chargement | un glTF meshopt de 4,5 Mo | deux glTF Draco (extérieur 3,4 Mo puis intérieurs 2,1 Mo en différé) |
 | Conservé | niveaux, lots Gexpertise, étiquettes, aménagement bureaux, visite à pied avec plan, trafic, arbres, boussole | idem, plus bouton Sources et bouton Occlusion |
 
+## v1 réaliste (`v1-realiste/index.html`)
+
+Artefact : https://claude.ai/artifact/DZQqf32sUeaKBVGGSCeta7. La v1 d'origine (moteur three r128, modèle meshopt, toutes ses
+fonctions) avec seulement le rendu poussé, par `scripts/patch_v1_realisme.py` appliqué au code source de la v1 : ciel physique et
+environnement recalculé avec le soleil, tone-mapping ACES, textures PBR projetées en triplanaire (pierre, dalles, enrobé, enduit,
+zinc, moquette, faux plafond), verre physique à clearcoat, occlusion ambiante SSAO (bouton), orthophoto IGN au sol à la place du
+socle, voisins opaques, soleil 5 h – 22 h avec nuit (fenêtres et lampadaires allumés).
+
+| Ensemble | Niveau 3 | Nuit | Visite |
+|---|---|---|---|
+| ![](captures/v1r_ensemble.png) | ![](captures/v1r_niveau3.png) | ![](captures/v1r_nuit.png) | ![](captures/v1r_visite.png) |
+
 ## Téléphone
 
 Sous 700 px de large, la page passe en mode léger : rendu direct sans post-traitement, ombres 1024, textures 512 px, orthophoto 1024,
